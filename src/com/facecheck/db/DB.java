@@ -22,7 +22,7 @@ public class DB {
 
         this.dbName = conf.containsKey("dbName") ? conf.get("dbName") : "facecheck_client";
         this.dbUser = conf.containsKey("dbUser") ? conf.get("dbUser") : "root";
-        this.dbPass = conf.containsKey("dbPass") ? conf.get("dbPass") : "root";
+        this.dbPass = conf.containsKey("dbPass") ? conf.get("dbPass") : "";
         this.dbHost = conf.containsKey("dbHost") ? conf.get("dbHost") : "localhost";
         this.dbPort = conf.containsKey("dbPort") ? conf.get("dbPort") : "3306";
 

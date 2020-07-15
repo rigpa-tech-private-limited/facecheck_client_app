@@ -30,6 +30,15 @@ public class Cameras {
         }
     }
     
+    public static dbRow getPID(String id){
+        try {
+            return Launcher.getDatabaseConnection().fetchByID(id, "configuration", "id");
+        } catch(Exception e){
+            e.printStackTrace();
+            return null;
+        }
+    }
+    
     public static dbList searchByName(String name){
         try {
             String sql = String.format(
@@ -49,6 +58,18 @@ public class Cameras {
         try {
             String sql = String.format("DELETE FROM cameras WHERE id = '%s'", 
                     Utils.escapeSQLVar(id)
+            );
+            return Launcher.getDatabaseConnection().nonTransactQuery(sql) > 0;
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            return false;
+        }
+    }
+    
+    public static boolean updatePID(String PID){
+        try {
+            String sql = String.format("UPDATE configuration SET value='%s' WHERE id = '1'", 
+                    Utils.escapeSQLVar(PID)
             );
             return Launcher.getDatabaseConnection().nonTransactQuery(sql) > 0;
         } catch (Exception ex) {

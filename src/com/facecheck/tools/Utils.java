@@ -1,6 +1,7 @@
 package com.facecheck.tools;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
@@ -10,6 +11,8 @@ import java.net.URL;
 import java.net.URLEncoder;
 import java.util.Map;
 import javax.swing.JOptionPane;
+
+import com.facecheck.client.Cameras;
 
 /**
  *
@@ -201,4 +204,119 @@ public class Utils {
 		}
 
 	}
+	
+	public static void startVideoStream() throws InterruptedException {
+//      String[] command = {"xterm", "-e", "/home/rigpa/Documents/aws-kinesis/amazon-kinesis-video-streams-producer-sdk-cpp/build/kvs_gstreamer_multistream_sample", "/home/rigpa/Desktop/inputs","&"};
+    	String[] command = {"/home/rigpa/Documents/aws-kinesis/amazon-kinesis-video-streams-producer-sdk-cpp/build/kvs_gstreamer_multistream_sample", "/home/rigpa/Desktop/inputs", "&"};
+
+        ProcessBuilder processBuilder = new ProcessBuilder(command);
+
+        processBuilder.directory(new File(System.getProperty("user.home")));
+
+        try {
+            System.out.println("processBuilder has started :( ");
+            Process process = processBuilder.start();
+
+            StringBuilder output = new StringBuilder();
+
+            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+
+            String line;
+
+            while ((line = reader.readLine()) != null) {
+                //System.out.println(line);
+                output.append(line + "\n");
+            }
+
+            int exitVal = process.waitFor();
+            if (exitVal == 0) {
+                System.out.println("Success");
+                System.out.println(output);
+            } else {
+                System.out.println("Something abnormal has haapened :( ");
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void stopVideoStream(String pid) throws InterruptedException {
+    	String[] command = {"kill", "-9", pid};
+
+        ProcessBuilder processBuilder = new ProcessBuilder(command);
+
+        processBuilder.directory(new File(System.getProperty("user.home")));
+
+        try {
+            System.out.println("processBuilder has started :( ");
+            Process process = processBuilder.start();
+
+            StringBuilder output = new StringBuilder();
+
+            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+
+            String line;
+
+            while ((line = reader.readLine()) != null) {
+                System.out.println(line);
+                output.append(line + "\n");
+            }
+
+            int exitVal = process.waitFor();
+            if (exitVal == 0) {
+                System.out.println("Success");
+                System.out.println(output);
+            } else {
+                System.out.println("Something abnormal has haapened :( ");
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void getPIDVideoStream() throws InterruptedException {
+    	
+    	
+    	String[] command = {"pidof", "kvs_gstreamer_multistream_sample"};
+
+        ProcessBuilder processBuilder = new ProcessBuilder(command);
+
+        processBuilder.directory(new File(System.getProperty("user.home")));
+
+        try {
+            System.out.println("processBuilder has started :( ");
+            Process process = processBuilder.start();
+
+            StringBuilder output = new StringBuilder();
+
+            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+
+            String line;
+            String Pid = "";
+
+            while ((line = reader.readLine()) != null) {
+                System.out.println(line);
+                Pid = line;
+                output.append(line + "\n");
+            }
+
+            int exitVal = process.waitFor();
+            if (exitVal == 0) {
+                System.out.println("Success");
+                System.out.println(output);
+                if(Cameras.updatePID(Pid)) {
+                	System.out.println("PID updated");
+                } else {
+                	System.out.println("PID not updated");                	
+                }
+            } else {
+                System.out.println("Something abnormal has haapened :( ");
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 }

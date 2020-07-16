@@ -45,11 +45,12 @@ public class Launcher {
         dbInfo.put("dbName", "facecheck_client");
         
         databaseConnection = new DB(dbInfo);
+        
         if(!databaseConnection.connectDB()){
             Utils.alert("Database connection failed.");
             return;
         } else {
-            Utils.alert("Database connection success.");
+            System.out.println("Database connection success.");
 //        	getCamerasFromServer();
         }
         

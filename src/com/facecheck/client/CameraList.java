@@ -172,31 +172,31 @@ public class CameraList extends JPanel {
 		});
 		buttons.add(btnDelete);
 
-		JButton btnStrat = new JButton("Start");
-		btnStrat.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				try {
-					Utils.startVideoStream();
-				} catch (InterruptedException e1) {
-					e1.printStackTrace();
-				}
-			}
-		});
-		buttons.add(btnStrat);
-
-		JButton btnStop = new JButton("Stop");
-		btnStop.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				try {
-					Utils.stopVideoStream("27099");
-				} catch (InterruptedException e1) {
-					e1.printStackTrace();
-				}
-			}
-		});
-		buttons.add(btnStop);
+//		JButton btnStrat = new JButton("Start");
+//		btnStrat.addActionListener(new ActionListener() {
+//			@Override
+//			public void actionPerformed(ActionEvent e) {
+//				try {
+//					Utils.startVideoStream();
+//				} catch (InterruptedException e1) {
+//					e1.printStackTrace();
+//				}
+//			}
+//		});
+//		buttons.add(btnStrat);
+//
+//		JButton btnStop = new JButton("Stop");
+//		btnStop.addActionListener(new ActionListener() {
+//			@Override
+//			public void actionPerformed(ActionEvent e) {
+//				try {
+//					Utils.stopVideoStream("27099");
+//				} catch (InterruptedException e1) {
+//					e1.printStackTrace();
+//				}
+//			}
+//		});
+//		buttons.add(btnStop);
 
 		toolbar = new JPanel(new BorderLayout());
 		toolbar.add(buttons, BorderLayout.WEST);

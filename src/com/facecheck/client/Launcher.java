@@ -23,8 +23,8 @@ public class Launcher {
         return databaseConnection;
     }
     
-    private static MainFrame frame;
-    public static MainFrame getFrame(){
+    private static LoginFrame frame;
+    public static LoginFrame getFrame(){
         return frame;
     }
     
@@ -54,10 +54,8 @@ public class Launcher {
 //        	getCamerasFromServer();
         }
         
-        frame = new MainFrame();
+        frame = new LoginFrame();
         frame.setVisible(true);
-        
-        frame.setContent(new CameraList(), "Cameras");
     }
     
     public static void getCamerasFromServer() {

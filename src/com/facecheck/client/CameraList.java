@@ -4,6 +4,12 @@ import com.facecheck.db.dbList;
 import com.facecheck.db.dbRow;
 import com.facecheck.tools.AppInfo;
 import com.facecheck.tools.Utils;
+import com.googlecode.javacv.CanvasFrame;
+import com.googlecode.javacv.FFmpegFrameGrabber;
+import com.googlecode.javacv.FrameGrabber;
+import com.googlecode.javacv.OpenCVFrameGrabber;
+import com.googlecode.javacv.cpp.opencv_core.IplImage;
+
 //import com.googlecode.javacv.CanvasFrame;
 //import com.googlecode.javacv.OpenCVFrameGrabber;
 //import com.googlecode.javacv.cpp.opencv_core.IplImage;
@@ -33,6 +39,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
+import javax.swing.WindowConstants;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import org.json.JSONObject;
@@ -58,7 +65,8 @@ public class CameraList extends JPanel {
 	private JTable table;
 	private JPanel toolbar;
 	private String PID = "";
-
+	public FFmpegFrameGrabber streamGrabber;
+	public CanvasFrame canvasFrame;
 	private void initComponents() {
 		String[] fields = "id, Name, URL(RTSP), Camera ID, Stream Name".split(", ");
 		DefaultTableModel tm = new DefaultTableModel(null, fields) {
@@ -132,10 +140,26 @@ public class CameraList extends JPanel {
 			public void mouseClicked(MouseEvent mouseEvent) {
 				if (mouseEvent.getClickCount() == 2) {
 					try {
-						showEditForm();
-						// showIPCamera();
-					} catch (Exception ex) {
-						Logger.getLogger(CameraList.class.getName()).log(Level.SEVERE, null, ex);
+
+						new Thread() {
+							@Override
+							public void run() {
+								try {
+									this.sleep(1000);
+									System.out.println("1 sec Delay showIPCamera");
+									showIPCamera();
+								} catch (InterruptedException e) {
+									e.printStackTrace();
+								} catch (Exception e) {
+									// TODO Auto-generated catch block
+									e.printStackTrace();
+								}
+
+							}
+						}.start();
+					} catch (Exception e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
 					}
 				}
 			}
@@ -172,31 +196,65 @@ public class CameraList extends JPanel {
 		});
 		buttons.add(btnDelete);
 
-//		JButton btnStrat = new JButton("Start");
-//		btnStrat.addActionListener(new ActionListener() {
-//			@Override
-//			public void actionPerformed(ActionEvent e) {
-//				try {
-//					Utils.startVideoStream();
-//				} catch (InterruptedException e1) {
-//					e1.printStackTrace();
-//				}
-//			}
-//		});
-//		buttons.add(btnStrat);
-//
-//		JButton btnStop = new JButton("Stop");
-//		btnStop.addActionListener(new ActionListener() {
-//			@Override
-//			public void actionPerformed(ActionEvent e) {
-//				try {
-//					Utils.stopVideoStream("27099");
-//				} catch (InterruptedException e1) {
-//					e1.printStackTrace();
-//				}
-//			}
-//		});
-//		buttons.add(btnStop);
+		/*JButton btnStrat = new JButton("Start");
+		btnStrat.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				try {
+
+					new Thread() {
+						@Override
+						public void run() {
+							try {
+								this.sleep(1000);
+								System.out.println("1 sec Delay showIPCamera");
+								showIPCamera();
+							} catch (InterruptedException e) {
+								e.printStackTrace();
+							} catch (Exception e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+							}
+
+						}
+					}.start();
+				} catch (Exception e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
+			}
+		});
+		buttons.add(btnStrat);
+
+		JButton btnStop = new JButton("Stop");
+		btnStop.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				try {
+					new Thread() {
+						@Override
+						public void run() {
+							try {
+								this.sleep(1000);
+								System.out.println("1 sec Delay stopIPCamera");
+
+								stopIPCamera();
+							} catch (InterruptedException e) {
+								e.printStackTrace();
+							} catch (Exception e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+							}
+
+						}
+					}.start();
+				} catch (Exception e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
+			}
+		});
+		buttons.add(btnStop);*/
 
 		toolbar = new JPanel(new BorderLayout());
 		toolbar.add(buttons, BorderLayout.WEST);
@@ -227,19 +285,45 @@ public class CameraList extends JPanel {
 	}
 
 	public void showIPCamera() throws Exception {
-//        OpenCVFrameGrabber frameGrabber = new OpenCVFrameGrabber("http://172.20.10.2:8080");
+		
+		String id = validateSelectedID();
+		String camera_url = validateSelectedCameraURL();
+		if (id.trim().isEmpty()) {
+			return;
+		}
+//        OpenCVFrameGrabber frameGrabber = new OpenCVFrameGrabber("rtsp://182.65.121.30:554");
 //        frameGrabber.setFormat("mjpeg");
 //        frameGrabber.start();
-//        IplImage iPimg = frameGrabber.grab();
-//        CanvasFrame canvasFrame = new CanvasFrame("Camera");
-//        canvasFrame.setCanvasSize(iPimg.width(), iPimg.height());
-//
-//        while (canvasFrame.isVisible() && (iPimg = frameGrabber.grab()) != null) {
-//            canvasFrame.showImage(iPimg);
-//        }
-//        frameGrabber.stop();
-//        canvasFrame.dispose();
-//        System.exit(0);
+		// rtsp://admin:admin123@192.168.1.10:554/channel=1/subtype=0
+		
+		streamGrabber = new FFmpegFrameGrabber(camera_url);
+//        streamGrabber.setFormat("h264");
+		streamGrabber.setFrameRate(100);
+		streamGrabber.setImageWidth(getWidth());
+		streamGrabber.setImageHeight(getHeight());
+
+		try {
+			streamGrabber.start();
+		} catch (FrameGrabber.Exception e) {
+			e.printStackTrace();
+		}
+		IplImage iPimg = streamGrabber.grab();
+		canvasFrame = new CanvasFrame("Camera");
+		canvasFrame.setCanvasSize(iPimg.width(), iPimg.height());
+		canvasFrame.setLocationRelativeTo(null);
+//		canvasFrame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+		while (canvasFrame.isVisible() && (iPimg = streamGrabber.grab()) != null) {
+			System.out.println("canvasFrame.isVisible() "+canvasFrame.isVisible());
+			canvasFrame.showImage(iPimg);
+		}
+		streamGrabber.stop();
+		canvasFrame.dispose();
+	}
+	
+	public void stopIPCamera() throws Exception {
+		System.out.println("stopIPCamera ");
+		streamGrabber.stop();
+		canvasFrame.dispose();
 	}
 
 	public void loadData(dbRow filter) {
@@ -263,7 +347,7 @@ public class CameraList extends JPanel {
 			pw = new PrintWriter(new FileWriter("/home/rigpa/Desktop/inputs"));
 			for (int i : tdata.keySet()) {
 				dt = tdata.get(i);
-				pw.write(dt.get("stream_name") + "####" + dt.get("url")+"\n");
+				pw.write(dt.get("stream_name") + "####" + dt.get("url") + "\n");
 			}
 			pw.close();
 		} catch (IOException e2) {
@@ -356,6 +440,14 @@ public class CameraList extends JPanel {
 			return "";
 		}
 		return table.getValueAt(selected, 3).toString();
+	}
+	
+	private String validateSelectedCameraURL() {
+		int selected = table.getSelectedRow();
+		if (selected < 0) {
+			return "";
+		}
+		return table.getValueAt(selected, 2).toString();
 	}
 
 	private void showInsertForm() {

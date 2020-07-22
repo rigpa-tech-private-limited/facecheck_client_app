@@ -67,7 +67,7 @@ public class LoginFrame extends JFrame {
 			public void actionPerformed(ActionEvent e) {
 				String userName = txtUsername.getText();
 				String password = txtPassword.getText();
-				if(userName.contentEquals("demo@vaango.co") && password.contentEquals("password")) {
+				if(userName.contentEquals("demo") && password.contentEquals("password")) {
 			      frame = new MainFrame();
 			      frame.setVisible(true);
 			      frame.setContent(new CameraList(), "Cameras");

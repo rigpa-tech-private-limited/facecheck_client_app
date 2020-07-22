@@ -8,6 +8,9 @@ import java.util.Map;
 public class DB {
 
 	/*
+	 * CREATE TABLE IF NOT EXISTS user ( id INTEGER PRIMARY KEY, email TEXT NOT
+	 * NULL, password TEXT NOT NULL, token TEXT NULL, aws_key TEXT NULL, aws_secret
+	 * TEXT NULL, logged_in TEXT NULL );
 	 * 
 	 * CREATE TABLE IF NOT EXISTS cameras( id INTEGER PRIMARY KEY, name TEXT NOT
 	 * NULL, url TEXT NULL, camera_id TEXT NULL, stream_name TEXT NULL );
@@ -69,20 +72,20 @@ public class DB {
 	public String getVar(String sql) throws SQLException {
 		String result = "";
 		ResultSet res = null;
-		
+
 		Statement s = this.dbConnection.createStatement();
-		
+
 		if (AppInfo.DATABASE_TYPE.equalsIgnoreCase("mysql")) {
 			s.executeQuery(sql);
 			res = s.getResultSet();
 		} else {
 			res = s.executeQuery(sql);
 		}
-		
+
 		if (res.next()) {
 			result = res.getString(1);
 		}
-		
+
 		return result;
 	}
 
@@ -95,20 +98,20 @@ public class DB {
 	public dbRow getRow(String sql) throws SQLException {
 		dbRow result = new dbRow();
 		ResultSet res = null;
-		
+
 		Statement s = this.dbConnection.createStatement();
-		
+
 		if (AppInfo.DATABASE_TYPE.equalsIgnoreCase("mysql")) {
 			s.executeQuery(sql);
 			res = s.getResultSet();
 		} else {
 			res = s.executeQuery(sql);
 		}
-		
+
 		if (res.next()) {
 			result = this.constructRow(res);
 		}
-		
+
 		return result;
 	}
 

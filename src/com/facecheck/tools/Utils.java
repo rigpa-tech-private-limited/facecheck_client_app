@@ -188,6 +188,8 @@ public class Utils {
 		try {
 			con.setRequestMethod("POST");
 			con.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+			con.setRequestProperty("Authorization","Bearer "+"");
+			 
 			con.setRequestProperty("Content-Length", String.valueOf(postDataBytes));
 			con.setDoOutput(true);
 			con.getOutputStream().write(postDataBytes);
@@ -206,8 +208,8 @@ public class Utils {
 	}
 	
 	public static void startVideoStream() throws InterruptedException {
-//      String[] command = {"xterm", "-e", "/home/rigpa/Documents/aws-kinesis/amazon-kinesis-video-streams-producer-sdk-cpp/build/kvs_gstreamer_multistream_sample", "/home/rigpa/Desktop/inputs","&"};
-    	String[] command = {"/home/rigpa/Documents/aws-kinesis/amazon-kinesis-video-streams-producer-sdk-cpp/build/kvs_gstreamer_multistream_sample", "/home/rigpa/Desktop/inputs", "&"};
+//      String[] command = {"xterm", "-e", "/home/rigpa/Documents/aws-kinesis/amazon-kinesis-video-streams-producer-sdk-cpp/build/kvs_gstreamer_multistream_sample","&"};
+    	String[] command = {"/home/rigpa/Documents/aws-kinesis/amazon-kinesis-video-streams-producer-sdk-cpp/build/kvs_gstreamer_multistream_sample", "&"};
 
         ProcessBuilder processBuilder = new ProcessBuilder(command);
 

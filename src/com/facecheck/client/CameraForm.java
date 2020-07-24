@@ -103,7 +103,7 @@ public class CameraForm extends JDialog {
 
 				byte[] postDataBytes = Utils.setPostDataBytes(params, postData);
 				params.clear();
-				String response = Utils.getResponse(postDataBytes, url);
+				String response = Utils.getResponse(postDataBytes, url, true);
 				System.out.println("Edit Camera Post API stopped");
 				System.out.println(response);
 				if (new JSONObject(response).get("status").equals("success")) {
@@ -145,7 +145,7 @@ public class CameraForm extends JDialog {
 
 				byte[] postDataBytes = Utils.setPostDataBytes(params, postData);
 				params.clear();
-				String response = Utils.getResponse(postDataBytes, url);
+				String response = Utils.getResponse(postDataBytes, url, true);
 				System.out.println("Add Camera Post API stopped");
 				System.out.println(response);
 				if (new JSONObject(response).get("status").equals("success")) {

@@ -18,48 +18,50 @@ import org.json.JSONObject;
  * @author user
  */
 public class Launcher {
-    private static DB databaseConnection;
-    public static DB getDatabaseConnection() {
-        return databaseConnection;
-    }
-    
-    private static LoginFrame frame;
-    public static LoginFrame getFrame(){
-        return frame;
-    }
-    
-    public static void main(String[] args){
-        try {
-            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-        } catch(Exception e){
-            
-        }
-        
-        // database connection information
-        Map<String, String> dbInfo = new HashMap<String, String>();
-        
-        dbInfo.put("dbHost", "localhost");
-        dbInfo.put("dbPort", "3306");
-        dbInfo.put("dbUser", "root");
-        dbInfo.put("dbPass", "");
-        dbInfo.put("dbName", "facecheck_client");
-        
-        databaseConnection = new DB(dbInfo);
-        
-        if(!databaseConnection.connectDB()){
-            Utils.alert("Database connection failed.");
-            return;
-        } else {
-            System.out.println("Database connection success.");
+	private static DB databaseConnection;
+
+	public static DB getDatabaseConnection() {
+		return databaseConnection;
+	}
+
+	private static LoginFrame frame;
+
+	public static LoginFrame getFrame() {
+		return frame;
+	}
+
+	public static void main(String[] args) {
+		try {
+			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+		} catch (Exception e) {
+
+		}
+
+		// database connection information
+		Map<String, String> dbInfo = new HashMap<String, String>();
+
+		dbInfo.put("dbHost", "localhost");
+		dbInfo.put("dbPort", "3306");
+		dbInfo.put("dbUser", "root");
+		dbInfo.put("dbPass", "");
+		dbInfo.put("dbName", "facecheck_client");
+
+		databaseConnection = new DB(dbInfo);
+
+		if (!databaseConnection.connectDB()) {
+			Utils.alert("Database connection failed.");
+			return;
+		} else {
+			System.out.println("Database connection success.");
 //        	getCamerasFromServer();
-        }
-        
-        frame = new LoginFrame();
-        frame.setVisible(true);
-    }
-    
-    public static void getCamerasFromServer() {
-    	try {
+		}
+
+		frame = new LoginFrame();
+		frame.setVisible(true);
+	}
+
+	public static void getCamerasFromServer() {
+		try {
 			System.out.println("GET Camera Post API started");
 			URL url = new URL(AppInfo.BASE_URL + AppInfo.GET_CAMERAS);
 			Map<String, String> params = new ConcurrentHashMap<String, String>();
@@ -67,7 +69,7 @@ public class Launcher {
 
 			byte[] postDataBytes = Utils.setPostDataBytes(params, postData);
 			params.clear();
-			String response = Utils.getResponse(postDataBytes, url);
+			String response = Utils.getResponse(postDataBytes, url, true);
 			System.out.println("GET Camera Post API stopped");
 			System.out.println(response);
 			if (new JSONObject(response).get("status").equals("success")) {
@@ -78,5 +80,5 @@ public class Launcher {
 		} catch (Exception e) {
 			System.out.println("Error " + e.getMessage());
 		}
-    }
+	}
 }

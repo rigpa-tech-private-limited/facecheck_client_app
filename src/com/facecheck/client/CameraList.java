@@ -67,6 +67,7 @@ public class CameraList extends JPanel {
 	private String PID = "";
 	public FFmpegFrameGrabber streamGrabber;
 	public CanvasFrame canvasFrame;
+
 	private void initComponents() {
 		String[] fields = "id, Name, URL(RTSP), Camera ID, Stream Name".split(", ");
 		DefaultTableModel tm = new DefaultTableModel(null, fields) {
@@ -196,66 +197,6 @@ public class CameraList extends JPanel {
 		});
 		buttons.add(btnDelete);
 
-		/*JButton btnStrat = new JButton("Start");
-		btnStrat.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				try {
-
-					new Thread() {
-						@Override
-						public void run() {
-							try {
-								this.sleep(1000);
-								System.out.println("1 sec Delay showIPCamera");
-								showIPCamera();
-							} catch (InterruptedException e) {
-								e.printStackTrace();
-							} catch (Exception e) {
-								// TODO Auto-generated catch block
-								e.printStackTrace();
-							}
-
-						}
-					}.start();
-				} catch (Exception e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
-				}
-			}
-		});
-		buttons.add(btnStrat);
-
-		JButton btnStop = new JButton("Stop");
-		btnStop.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				try {
-					new Thread() {
-						@Override
-						public void run() {
-							try {
-								this.sleep(1000);
-								System.out.println("1 sec Delay stopIPCamera");
-
-								stopIPCamera();
-							} catch (InterruptedException e) {
-								e.printStackTrace();
-							} catch (Exception e) {
-								// TODO Auto-generated catch block
-								e.printStackTrace();
-							}
-
-						}
-					}.start();
-				} catch (Exception e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
-				}
-			}
-		});
-		buttons.add(btnStop);*/
-
 		toolbar = new JPanel(new BorderLayout());
 		toolbar.add(buttons, BorderLayout.WEST);
 
@@ -285,7 +226,7 @@ public class CameraList extends JPanel {
 	}
 
 	public void showIPCamera() throws Exception {
-		
+
 		String id = validateSelectedID();
 		String camera_url = validateSelectedCameraURL();
 		if (id.trim().isEmpty()) {
@@ -295,7 +236,7 @@ public class CameraList extends JPanel {
 //        frameGrabber.setFormat("mjpeg");
 //        frameGrabber.start();
 		// rtsp://admin:admin123@192.168.1.10:554/channel=1/subtype=0
-		
+
 		streamGrabber = new FFmpegFrameGrabber(camera_url);
 //        streamGrabber.setFormat("h264");
 		streamGrabber.setFrameRate(100);
@@ -313,13 +254,13 @@ public class CameraList extends JPanel {
 		canvasFrame.setLocationRelativeTo(null);
 //		canvasFrame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 		while (canvasFrame.isVisible() && (iPimg = streamGrabber.grab()) != null) {
-			System.out.println("canvasFrame.isVisible() "+canvasFrame.isVisible());
+			System.out.println("canvasFrame.isVisible() " + canvasFrame.isVisible());
 			canvasFrame.showImage(iPimg);
 		}
 		streamGrabber.stop();
 		canvasFrame.dispose();
 	}
-	
+
 	public void stopIPCamera() throws Exception {
 		System.out.println("stopIPCamera ");
 		streamGrabber.stop();
@@ -340,20 +281,14 @@ public class CameraList extends JPanel {
 			d = tdata.get(i);
 			tm.addRow(new Object[] { d.get("id"), d.get("name"), d.get("url"), d.get("camera_id"),
 					d.get("stream_name") });
-			System.out.println("Stream Name : " + d.get("stream_name") + "####" + d.get("url"));
 		}
-		PrintWriter pw;
-		try {
-			pw = new PrintWriter(new FileWriter("/home/rigpa/Desktop/inputs"));
-			for (int i : tdata.keySet()) {
-				dt = tdata.get(i);
-				pw.write(dt.get("stream_name") + "####" + dt.get("url") + "\n");
-			}
-			pw.close();
-		} catch (IOException e2) {
-			// TODO Auto-generated catch block
-			e2.printStackTrace();
-		}
+		/*
+		 * PrintWriter pw; try { pw = new PrintWriter(new
+		 * FileWriter("/home/rigpa/Desktop/inputs")); for (int i : tdata.keySet()) { dt
+		 * = tdata.get(i); pw.write(dt.get("stream_name") + "####" + dt.get("url") +
+		 * "\n"); } pw.close(); } catch (IOException e2) { // TODO Auto-generated catch
+		 * block e2.printStackTrace(); }
+		 */
 
 		if ((tdata != null)) {
 			dbRow data = Cameras.getPID("1");
@@ -362,8 +297,6 @@ public class CameraList extends JPanel {
 				return;
 			}
 			for (String field : data.keySet()) {
-				System.out.println("PID field : " + field);
-				System.out.println("PID value : " + data.get("value"));
 				if (field.equalsIgnoreCase("value")) {
 					PID = data.get("value");
 					System.out.println("PIDvalue : " + PID);
@@ -387,8 +320,8 @@ public class CameraList extends JPanel {
 								@Override
 								public void run() {
 									try {
-										this.sleep(5000);
-										System.out.println("10 sec Delay");
+										this.sleep(2000);
+										System.out.println("2 sec Delay");
 										Utils.getPIDVideoStream();
 									} catch (InterruptedException e) {
 										e.printStackTrace();
@@ -441,7 +374,7 @@ public class CameraList extends JPanel {
 		}
 		return table.getValueAt(selected, 3).toString();
 	}
-	
+
 	private String validateSelectedCameraURL() {
 		int selected = table.getSelectedRow();
 		if (selected < 0) {
@@ -491,7 +424,7 @@ public class CameraList extends JPanel {
 
 				byte[] postDataBytes = Utils.setPostDataBytes(params, postData);
 				params.clear();
-				String response = Utils.getResponse(postDataBytes, url);
+				String response = Utils.getResponse(postDataBytes, url, true);
 				System.out.println("Delete Camera Post API stopped");
 				System.out.println(response);
 				if (new JSONObject(response).get("status").equals("success")) {

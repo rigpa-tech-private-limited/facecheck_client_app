@@ -13,6 +13,7 @@ import java.util.Map;
 import javax.swing.JOptionPane;
 
 import com.facecheck.client.Cameras;
+import com.facecheck.db.dbRow;
 
 /**
  *
@@ -20,134 +21,128 @@ import com.facecheck.client.Cameras;
  */
 public class Utils {
 
-    public static void stdout(Object o) {
-        System.out.println(o);
-    }
-    public static String escapeSQLVar(String sql) {
-        return escapeSQLVar(sql, true);
-    }
+	public static void stdout(Object o) {
+		System.out.println(o);
+	}
 
-    // source, stackoverflow.com
-    public static String escapeSQLVar(String sql, boolean escapeDoubleQuotes) {
-        StringBuilder sBuilder = new StringBuilder(sql.length() * 11/10);
+	public static String escapeSQLVar(String sql) {
+		return escapeSQLVar(sql, true);
+	}
 
-        int stringLength = sql.length();
+	// source, stackoverflow.com
+	public static String escapeSQLVar(String sql, boolean escapeDoubleQuotes) {
+		StringBuilder sBuilder = new StringBuilder(sql.length() * 11 / 10);
 
-        for (int i = 0; i < stringLength; ++i) {
-            char c = sql.charAt(i);
+		int stringLength = sql.length();
 
-            switch (c) {
-            case 0: /* Must be escaped for 'mysql' */
-                sBuilder.append('\\');
-                sBuilder.append('0');
+		for (int i = 0; i < stringLength; ++i) {
+			char c = sql.charAt(i);
 
-                break;
+			switch (c) {
+			case 0: /* Must be escaped for 'mysql' */
+				sBuilder.append('\\');
+				sBuilder.append('0');
 
-            case '\n': /* Must be escaped for logs */
-                sBuilder.append('\\');
-                sBuilder.append('n');
+				break;
 
-                break;
+			case '\n': /* Must be escaped for logs */
+				sBuilder.append('\\');
+				sBuilder.append('n');
 
-            case '\r':
-                sBuilder.append('\\');
-                sBuilder.append('r');
+				break;
 
-                break;
+			case '\r':
+				sBuilder.append('\\');
+				sBuilder.append('r');
 
-            case '\\':
-                sBuilder.append('\\');
-                sBuilder.append('\\');
+				break;
 
-                break;
+			case '\\':
+				sBuilder.append('\\');
+				sBuilder.append('\\');
 
-            case '\'':
-                sBuilder.append('\\');
-                sBuilder.append('\'');
+				break;
 
-                break;
+			case '\'':
+				sBuilder.append('\\');
+				sBuilder.append('\'');
 
-            case '"': /* Better safe than sorry */
-                if (escapeDoubleQuotes) {
-                    sBuilder.append('\\');
-                }
+				break;
 
-                sBuilder.append('"');
+			case '"': /* Better safe than sorry */
+				if (escapeDoubleQuotes) {
+					sBuilder.append('\\');
+				}
 
-                break;
+				sBuilder.append('"');
 
-            case '\032': /* This gives problems on Win32 */
-                sBuilder.append('\\');
-                sBuilder.append('Z');
+				break;
 
-                break;
+			case '\032': /* This gives problems on Win32 */
+				sBuilder.append('\\');
+				sBuilder.append('Z');
 
-            case '\u00a5':
-            case '\u20a9':
-                // escape characters interpreted as backslash by mysql
-                // fall through
+				break;
 
-            default:
-                sBuilder.append(c);
-            }
-        }
+			case '\u00a5':
+			case '\u20a9':
+				// escape characters interpreted as backslash by mysql
+				// fall through
 
-        return sBuilder.toString();
-    }
+			default:
+				sBuilder.append(c);
+			}
+		}
 
-    public static void alert(String msg) {
-        JOptionPane.showMessageDialog(null, msg,
-                "Alert", JOptionPane.INFORMATION_MESSAGE);
-    }
+		return sBuilder.toString();
+	}
 
-    public static void sleep(long ms) {
-        try {
-            Thread.sleep(ms);
-        } catch (Exception e) {
+	public static void alert(String msg) {
+		JOptionPane.showMessageDialog(null, msg, "Alert", JOptionPane.INFORMATION_MESSAGE);
+	}
 
-        }
-    }
+	public static void sleep(long ms) {
+		try {
+			Thread.sleep(ms);
+		} catch (Exception e) {
 
-    public static String prompt(String title) {
-        return Utils.prompt(title, "");
-    }
+		}
+	}
 
-    public static String prompt(String title, String def) {
-        String str = null;
-        if (def.trim().equals("")) {
-            str = JOptionPane.showInputDialog(null, title, AppInfo.APP_NAME,
-                    JOptionPane.INFORMATION_MESSAGE);
-        } else {
-            str = (String) JOptionPane.showInputDialog(null, title, AppInfo.APP_NAME,
-                    JOptionPane.INFORMATION_MESSAGE, null, null, def);
-        }
-        return str;
-    }
+	public static String prompt(String title) {
+		return Utils.prompt(title, "");
+	}
 
-    public static boolean confirm(String msg) {
-        Object[] btn = new String[]{"Yes", "Cancel"};
-        int opt = chooseOption(btn, msg, "Delete");
-        return opt == 0;
-    }
+	public static String prompt(String title, String def) {
+		String str = null;
+		if (def.trim().equals("")) {
+			str = JOptionPane.showInputDialog(null, title, AppInfo.APP_NAME, JOptionPane.INFORMATION_MESSAGE);
+		} else {
+			str = (String) JOptionPane.showInputDialog(null, title, AppInfo.APP_NAME, JOptionPane.INFORMATION_MESSAGE,
+					null, null, def);
+		}
+		return str;
+	}
 
-    public static int chooseOption(Object[] buttons, String msg, String title) {
-        int opt = JOptionPane.showOptionDialog(null, msg,
-                title, JOptionPane.DEFAULT_OPTION,
-                JOptionPane.QUESTION_MESSAGE, null,
-                buttons, null);
-        return opt;
-    }
-    
-    
-    /**
-	 * This method will convert the map data into byte array payload in order to send
-	 * in a post request
+	public static boolean confirm(String msg) {
+		Object[] btn = new String[] { "Yes", "Cancel" };
+		int opt = chooseOption(btn, msg, "Delete");
+		return opt == 0;
+	}
+
+	public static int chooseOption(Object[] buttons, String msg, String title) {
+		int opt = JOptionPane.showOptionDialog(null, msg, title, JOptionPane.DEFAULT_OPTION,
+				JOptionPane.QUESTION_MESSAGE, null, buttons, null);
+		return opt;
+	}
+
+	/**
+	 * This method will convert the map data into byte array payload in order to
+	 * send in a post request
 	 * 
-	 * @param params
-	 * 		  post data payload
+	 * @param params   post data payload
 	 * 
-	 * @param postData
-	 * 		  convert the map data into string payload
+	 * @param postData convert the map data into string payload
 	 * 
 	 * @return byte array of post data to send as payload in post request
 	 * 
@@ -160,36 +155,49 @@ public class Utils {
 			if (postData.length() != 0)
 				postData.append("&");
 
-                        postData.append(URLEncoder.encode(param.getKey(), "UTF-8")); // TODO Auto-generated catch block
-                        postData.append("=");
-                        postData.append(URLEncoder.encode(param.getValue(), "UTF-8"));
+			postData.append(URLEncoder.encode(param.getKey(), "UTF-8")); // TODO Auto-generated catch block
+			postData.append("=");
+			postData.append(URLEncoder.encode(param.getValue(), "UTF-8"));
 		}
 
 		return postData.toString().getBytes("UTF-8");
 	}
 
 	/**
-	 * This method will make post request and parse the obtained response
-	 * and send it back
+	 * This method will make post request and parse the obtained response and send
+	 * it back
 	 * 
-	 * @param postDataBytes
-	 * 		  contains payload data in byte array
+	 * @param postDataBytes contains payload data in byte array
 	 * 
-	 * @param url
-	 * 		  URL of the post request
+	 * @param url           URL of the post request
 	 * 
 	 * @return response of post request
 	 * 
 	 * @throws IOException
 	 * 
 	 */
-	public static String getResponse(byte[] postDataBytes, URL url) throws IOException {
+	public static String getResponse(byte[] postDataBytes, URL url, boolean incldeToken) throws IOException {
 		HttpURLConnection con = (HttpURLConnection) url.openConnection();
 		try {
 			con.setRequestMethod("POST");
 			con.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
-			con.setRequestProperty("Authorization","Bearer "+"");
-			 
+			if (incldeToken) {
+				String userToken = "";
+				dbRow data = Cameras.getUserToken();
+				System.out.println("User data : " + data);
+				if (data != null) {
+					for (String field : data.keySet()) {
+						if (field.equalsIgnoreCase("token")) {
+							userToken = data.get("token");
+							if (userToken != "") {
+								System.out.println("Authorization userToken : " + userToken);
+								con.setRequestProperty("Authorization", "Bearer " + userToken);
+							}
+						}
+					}
+				}
+			}
+
 			con.setRequestProperty("Content-Length", String.valueOf(postDataBytes));
 			con.setDoOutput(true);
 			con.getOutputStream().write(postDataBytes);
@@ -206,119 +214,121 @@ public class Utils {
 		}
 
 	}
-	
+
 	public static void startVideoStream() throws InterruptedException {
 //      String[] command = {"xterm", "-e", "/home/rigpa/Documents/aws-kinesis/amazon-kinesis-video-streams-producer-sdk-cpp/build/kvs_gstreamer_multistream_sample","&"};
-    	String[] command = {"/home/rigpa/Documents/aws-kinesis/amazon-kinesis-video-streams-producer-sdk-cpp/build/kvs_gstreamer_multistream_sample", "&"};
+		String[] command = {
+				"/home/rigpa/Documents/aws-kinesis/amazon-kinesis-video-streams-producer-sdk-cpp/build/kvs_gstreamer_multistream_sample",
+				"&" };
+//		String[] command = { "pwd" };
 
-        ProcessBuilder processBuilder = new ProcessBuilder(command);
+		ProcessBuilder processBuilder = new ProcessBuilder(command);
 
-        processBuilder.directory(new File(System.getProperty("user.home")));
+		processBuilder.directory(new File(System.getProperty("user.home")));
 
-        try {
-            System.out.println("processBuilder has started :( ");
-            Process process = processBuilder.start();
+		try {
+			System.out.println("StartStream Process has started :( "+ "\n");
+			Process process = processBuilder.start();
 
-            StringBuilder output = new StringBuilder();
+			StringBuilder output = new StringBuilder();
 
-            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+			BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
 
-            String line;
+			String line;
 
-            while ((line = reader.readLine()) != null) {
-                //System.out.println(line);
-                output.append(line + "\n");
-            }
+			while ((line = reader.readLine()) != null) {
+//				System.out.println(line);
+				output.append(line + "\n");
+			}
 
-            int exitVal = process.waitFor();
-            if (exitVal == 0) {
-                System.out.println("Success");
-                System.out.println(output);
-            } else {
-                System.out.println("Something abnormal has haapened :( ");
-            }
+			int exitVal = process.waitFor();
+			if (exitVal == 0) {
+				System.out.println("StartStream Process has completed"+ "\n");
+				System.out.println(output);
+			} else {
+				System.out.println("Something abnormal has happend in StartStream Process"+ "\n");
+			}
 
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
 
-    public static void stopVideoStream(String pid) throws InterruptedException {
-    	String[] command = {"kill", "-9", pid};
+	public static void stopVideoStream(String pid) throws InterruptedException {
+		String[] command = { "kill", "-9", pid };
 
-        ProcessBuilder processBuilder = new ProcessBuilder(command);
+		ProcessBuilder processBuilder = new ProcessBuilder(command);
 
-        processBuilder.directory(new File(System.getProperty("user.home")));
+		processBuilder.directory(new File(System.getProperty("user.home")));
 
-        try {
-            System.out.println("processBuilder has started :( ");
-            Process process = processBuilder.start();
+		try {
+			System.out.println("StopStream Process has started :( "+ "\n");
+			Process process = processBuilder.start();
 
-            StringBuilder output = new StringBuilder();
+			StringBuilder output = new StringBuilder();
 
-            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+			BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
 
-            String line;
+			String line;
 
-            while ((line = reader.readLine()) != null) {
-                System.out.println(line);
-                output.append(line + "\n");
-            }
+			while ((line = reader.readLine()) != null) {
+//				System.out.println(line);
+				output.append(line + "\n");
+			}
 
-            int exitVal = process.waitFor();
-            if (exitVal == 0) {
-                System.out.println("Success");
-                System.out.println(output);
-            } else {
-                System.out.println("Something abnormal has haapened :( ");
-            }
+			int exitVal = process.waitFor();
+			if (exitVal == 0) {
+				System.out.println("StopStream Process has completed"+ "\n");
+				System.out.println(output);
+			} else {
+				System.out.println("Something abnormal has happend in StopStream Process"+ "\n");
+			}
 
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
 
-    public static void getPIDVideoStream() throws InterruptedException {
-    	
-    	
-    	String[] command = {"pidof", "kvs_gstreamer_multistream_sample"};
+	public static void getPIDVideoStream() throws InterruptedException {
 
-        ProcessBuilder processBuilder = new ProcessBuilder(command);
+		String[] command = { "pidof", "kvs_gstreamer_multistream_sample" };
 
-        processBuilder.directory(new File(System.getProperty("user.home")));
+		ProcessBuilder processBuilder = new ProcessBuilder(command);
 
-        try {
-            System.out.println("processBuilder has started :( ");
-            Process process = processBuilder.start();
+		processBuilder.directory(new File(System.getProperty("user.home")));
 
-            StringBuilder output = new StringBuilder();
+		try {
+			System.out.println("Getting pID process has started :( "+ "\n");
+			Process process = processBuilder.start();
 
-            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+			StringBuilder output = new StringBuilder();
 
-            String line;
-            String Pid = "";
+			BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
 
-            while ((line = reader.readLine()) != null) {
-                System.out.println(line);
-                Pid = line;
-                output.append(line + "\n");
-            }
+			String line;
+			String Pid = "";
 
-            int exitVal = process.waitFor();
-            if (exitVal == 0) {
-                System.out.println("Success");
-                System.out.println(output);
-                if(Cameras.updatePID(Pid)) {
-                	System.out.println("PID updated");
-                } else {
-                	System.out.println("PID not updated");                	
-                }
-            } else {
-                System.out.println("Something abnormal has haapened :( ");
-            }
+			while ((line = reader.readLine()) != null) {
+//				System.out.println(line);
+				Pid = line;
+				output.append(line + "\n");
+			}
 
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
+			int exitVal = process.waitFor();
+			if (exitVal == 0) {
+				System.out.println("pID process has Completed"+ "\n");
+				System.out.println(output);
+				if (Cameras.updatePID(Pid)) {
+					System.out.println("PID has updated"+ "\n");
+				} else {
+					System.out.println("PID has not updated"+ "\n");
+				}
+			} else {
+				System.out.println("Something abnormal has happend in pID process"+ "\n");
+			}
+
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
 }

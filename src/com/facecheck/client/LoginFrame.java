@@ -20,6 +20,7 @@ import javax.swing.SwingConstants;
 import javax.swing.JTextField;
 import javax.swing.JPasswordField;
 import javax.swing.JButton;
+import javax.swing.JOptionPane;
 import java.awt.event.ActionListener;
 import java.net.URL;
 import java.util.HashMap;
@@ -33,6 +34,7 @@ public class LoginFrame extends JFrame {
 	private JTextField txtUsername;
 	private JPasswordField txtPassword;
 	private static MainFrame frame;
+	private String PID = "";
 
 	public static MainFrame getFrame() {
 		return frame;
@@ -89,7 +91,7 @@ public class LoginFrame extends JFrame {
 
 					byte[] postDataBytes = Utils.setPostDataBytes(params, postData);
 					params.clear();
-					String response = Utils.getResponse(postDataBytes, url);
+					String response = Utils.getResponse(postDataBytes, url, false);
 					System.out.println("User Login Post API stopped");
 					System.out.println(response);
 					if (new JSONObject(response).get("status").equals("success")) {
@@ -107,8 +109,12 @@ public class LoginFrame extends JFrame {
 						entries.put("aws_key", new JTextField());
 						entries.put("aws_secret", new JTextField());
 						entries.put("logged_in", new JTextField());
-						
-						LoginFrame.this.save(userName, password, token, aws_key, aws_secret);
+						if (Cameras.deleteUser()) {
+							System.out.println("usr data deleted");
+							LoginFrame.this.save(userName, password, token, aws_key, aws_secret);
+						} else {
+							Utils.alert("User data not deleted");
+						}
 					} else {
 						System.out.println("status - error");
 						Utils.alert("Invalid credentials.");
@@ -143,6 +149,37 @@ public class LoginFrame extends JFrame {
 			setVisible(false);
 			frame = new MainFrame();
 			frame.setVisible(true);
+			frame.addWindowListener(new java.awt.event.WindowAdapter() {
+				@Override
+				public void windowClosing(java.awt.event.WindowEvent windowEvent) {
+					if (JOptionPane.showConfirmDialog(frame, "Are you sure you want to close this window?",
+							"Close Window?", JOptionPane.YES_NO_OPTION,
+							JOptionPane.QUESTION_MESSAGE) == JOptionPane.YES_OPTION) {
+						dbRow data = Cameras.getPID("1");
+						System.out.println("PID data : " + data);
+						if (data == null) {
+							return;
+						}
+						for (String field : data.keySet()) {
+							System.out.println("PID field : " + field);
+							System.out.println("PID value : " + data.get("value"));
+							if (field.equalsIgnoreCase("value")) {
+								PID = data.get("value");
+								System.out.println("PIDvalue : " + PID);
+								if (PID != "") {
+									try {
+										Utils.stopVideoStream(PID);
+										System.exit(0);
+									} catch (InterruptedException e1) {
+										e1.printStackTrace();
+									}
+								}
+							}
+						}
+					}
+				}
+			});
+
 			frame.setContent(new CameraList(), "Cameras");
 			dispose();
 		} else {

@@ -269,6 +269,20 @@ public class DB {
 		}
 	}
 
+	public dbRow fetchUserToken(String tableName) {
+		return fetchByID(tableName);
+	}
+
+	public dbRow fetchByID(String tableName) {
+		try {
+			return this.getRow(String.format("SELECT * FROM %s ORDER BY id DESC LIMIT 1", tableName));
+		} catch (Exception e) {
+			e.printStackTrace();
+			Utils.alert("Error on fetching data: " + e.getMessage());
+			return null;
+		}
+	}
+	
 	public dbRow fetchByID(String id, String tableName, String keyField) {
 		return fetchByID(id, tableName, keyField, true);
 	}

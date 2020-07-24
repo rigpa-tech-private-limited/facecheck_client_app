@@ -39,6 +39,15 @@ public class Cameras {
         }
     }
     
+    public static dbRow getUserToken(){
+        try {
+            return Launcher.getDatabaseConnection().fetchUserToken("user");
+        } catch(Exception e){
+            e.printStackTrace();
+            return null;
+        }
+    }
+    
     public static dbList searchByName(String name){
         try {
             String sql = String.format(
@@ -71,6 +80,16 @@ public class Cameras {
             String sql = String.format("UPDATE configuration SET value='%s' WHERE id = '1'", 
                     Utils.escapeSQLVar(PID)
             );
+            return Launcher.getDatabaseConnection().nonTransactQuery(sql) > 0;
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            return false;
+        }
+    }
+    
+    public static boolean deleteUser(){
+        try {
+            String sql = "DELETE FROM user";
             return Launcher.getDatabaseConnection().nonTransactQuery(sql) > 0;
         } catch (Exception ex) {
             ex.printStackTrace();

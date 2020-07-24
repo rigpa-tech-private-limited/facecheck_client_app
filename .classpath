@@ -5,7 +5,7 @@
 	<classpathentry kind="lib" path="libs/miglayout-core-4.2.jar"/>
 	<classpathentry kind="lib" path="libs/miglayout-swing-4.2.jar"/>
 	<classpathentry kind="lib" path="libs/mysql-connector-java-5.1.38-bin.jar"/>
-	<classpathentry kind="lib" path="/home/rigpa/Desktop/VINOTH/facecheck_client_app/libs/json-20190722.jar"/>
+	<classpathentry kind="lib" path="/home/rigpa/Desktop/VINOTH/facecheck_client_app/libs/org.json.jar"/>
 	<classpathentry kind="lib" path="/home/rigpa/Desktop/VINOTH/facecheck_client_app/libs/sqlite-jdbc-3.30.1.jar"/>
 	<classpathentry kind="lib" path="/home/rigpa/Desktop/VINOTH/facecheck_client_app/libs/opencv/ffmpeg-2.1.1-linux-x86.jar"/>
 	<classpathentry kind="lib" path="/home/rigpa/Desktop/VINOTH/facecheck_client_app/libs/opencv/ffmpeg-2.1.1-linux-x86_64.jar"/>

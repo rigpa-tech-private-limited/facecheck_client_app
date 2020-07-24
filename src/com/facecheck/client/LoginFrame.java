@@ -58,7 +58,7 @@ public class LoginFrame extends JFrame {
 		lblNewLabel.setBounds(6, 41, 444, 25);
 		contentPane.add(lblNewLabel);
 
-		JLabel lblNewLabel_1 = new JLabel("Username");
+		JLabel lblNewLabel_1 = new JLabel("Email");
 		lblNewLabel_1.setFont(new Font("Lucida Grande", Font.BOLD, 13));
 		lblNewLabel_1.setBounds(90, 98, 100, 16);
 		contentPane.add(lblNewLabel_1);

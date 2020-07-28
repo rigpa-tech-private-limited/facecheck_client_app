@@ -18,7 +18,9 @@ public class DB {
 	 * CREATE TABLE IF NOT EXISTS configuration( id INTEGER PRIMARY KEY, name TEXT
 	 * NOT NULL, value TEXT NULL );
 	 * 
-	 * INSERT INTO configuration (name,value) VALUES("pid","1000");
+	 * CREATE TABLE IF NOT EXISTS logs ( id INTEGER PRIMARY KEY, log_time TEXT NULL, message TEXT NULL, process_name TEXT NOT NULL, type TEXT NULL );
+	 * 
+	 * INSERT INTO configuration (name,value) VALUES ("pid","1000");
 	 * 
 	 */
 
@@ -38,12 +40,12 @@ public class DB {
 
 		this.dbName = conf.containsKey("dbName") ? conf.get("dbName") : "facecheck_client";
 		this.dbUser = conf.containsKey("dbUser") ? conf.get("dbUser") : "root";
-		this.dbPass = conf.containsKey("dbPass") ? conf.get("dbPass") : "";
+		this.dbPass = conf.containsKey("dbPass") ? conf.get("dbPass") : "facecheck";
 		this.dbHost = conf.containsKey("dbHost") ? conf.get("dbHost") : "localhost";
 		this.dbPort = conf.containsKey("dbPort") ? conf.get("dbPort") : "3306";
 
 		if (AppInfo.DATABASE_TYPE.equalsIgnoreCase("mysql")) {
-			this.connString = String.format("jdbc:mysql://%s:%s/%s?user=%s&password=%s", this.dbHost, this.dbPort,
+			this.connString = String.format("jdbc:mysql://%s:%s/%s?user=%s&password=%s&useUnicode=yes&characterEncoding=UTF-8&useSSL=false", this.dbHost, this.dbPort,
 					this.dbName, this.dbUser, this.dbPass);
 		} else {
 			this.connString = "jdbc:sqlite:facecheckclient.sqlite";
@@ -259,6 +261,19 @@ public class DB {
 			sql = String.format("SELECT * FROM %s WHERE %s ORDER BY %s ASC", tableName, DB.buildQueryClause(filter),
 					orderField);
 		}
+		try {
+			dbList prods = this.getList(sql);
+			return prods;
+		} catch (Exception e) {
+			e.printStackTrace();
+			Utils.alert("Error on fetching data");
+			return null;
+		}
+	}
+	
+	public dbList loadLogData(String tableName) {
+		String sql = "SELECT * FROM " + tableName + " ORDER BY id ASC";
+		
 		try {
 			dbList prods = this.getList(sql);
 			return prods;

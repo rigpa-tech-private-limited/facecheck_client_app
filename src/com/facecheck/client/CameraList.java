@@ -27,21 +27,30 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.image.BufferedImage;
 import java.net.URL;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JButton;
+import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JTabbedPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
 import javax.swing.WindowConstants;
+import javax.swing.border.EmptyBorder;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableCellRenderer;
+import javax.swing.table.TableColumnModel;
+
 import org.json.JSONObject;
 import java.io.BufferedReader;
 import java.io.File;
@@ -50,33 +59,177 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import java.awt.Component;
+import javax.swing.SwingConstants;
+import javax.swing.ImageIcon;
+import java.awt.GridLayout;
+import javax.swing.border.LineBorder;
+import java.awt.GridBagLayout;
+import java.awt.GridBagConstraints;
+import javax.swing.GroupLayout;
+import javax.swing.GroupLayout.Alignment;
+
 /**
  *
  * @author user
  */
-public class CameraList extends JPanel {
+public class CameraList extends JFrame {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	private JPanel contentPane;
+
+	/**
+	 * Create the frame.
+	 */
 	public CameraList() {
-		super(new BorderLayout());
+		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		setBounds(100, 100, 450, 300);
+		contentPane = new JPanel();
+		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
+		setContentPane(contentPane);
+		contentPane.setLayout(null);
+
+		setMinimumSize(new Dimension(1024, 750));
+		setLocationRelativeTo(null);
+
 		initComponents();
-		loadAllData();
+		loadAllData("cmd");
+//		loadLogData();
+
 	}
 
 	private JTable table;
-	private JPanel toolbar;
+	private JTable logtable;
 	private String PID = "";
 	public FFmpegFrameGrabber streamGrabber;
 	public CanvasFrame canvasFrame;
+	public JPanel camera_preview;
+	public JLabel lblNewLabel;
 
 	private void initComponents() {
-		String[] fields = "id, Name, URL(RTSP), Camera ID, Stream Name".split(", ");
+		String[] fields = "id, Name, URL(RTSP), Camera ID, Stream Name, Status".split(", ");
 		DefaultTableModel tm = new DefaultTableModel(null, fields) {
+			/**
+			 * 
+			 */
+			private static final long serialVersionUID = 1L;
+
 			@Override
 			public boolean isCellEditable(int x, int y) {
 				return false;
 			}
 		};
+//        table.setTableHeader(null);
+		DefaultTableCellRenderer header = new DefaultTableCellRenderer();
+		header.setBackground(new Color(239, 240, 241));
+		header.setFont(header.getFont().deriveFont(Font.BOLD));
+
+		String[] logfields = "id, Time, Message, Process, Type".split(", ");
+		DefaultTableModel logtm = new DefaultTableModel(null, logfields) {
+			/**
+			 * 
+			 */
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public boolean isCellEditable(int x, int y) {
+				return false;
+			}
+		};
+//        table.setTableHeader(null);
+		DefaultTableCellRenderer logheader = new DefaultTableCellRenderer();
+		logheader.setBackground(new Color(239, 240, 241));
+		logheader.setFont(header.getFont().deriveFont(Font.BOLD));
+
+//		int nameWidth = Math.round(0.30f * tW);
+//
+//		int urlWidth = Math.round(0.70f * tW);
+
+		JTabbedPane tabbedPane = new JTabbedPane(JTabbedPane.TOP);
+		tabbedPane.setBounds(6, 6, 438, 266);
+		tabbedPane.addChangeListener(new ChangeListener() {
+			public void stateChanged(ChangeEvent e) {
+				System.out.println("Tab: " + tabbedPane.getSelectedIndex());
+				if (tabbedPane.getSelectedIndex() == 1) {
+					loadLogData();
+				}
+			}
+		});
+//		contentPane.add(tabbedPane);
+
+		contentPane.setLayout(new BorderLayout());
+		contentPane.add(tabbedPane, BorderLayout.CENTER);
+
+//		JLabel lblNewLabel = new JLabel("Cameras Tab");
+//		cameras.add(lblNewLabel);
+
+		JPanel services = new JPanel();
+		tabbedPane.addTab("Cameras", null, services, null);
+		services.setLayout(new GridLayout(0, 2, 0, 0));
+		// for (int column = 0; column < table.getColumnCount(); column++) {
+		// int width = 15; // Min width
+		// for (int row = 0; row < table.getRowCount(); row++) {
+		// TableCellRenderer renderer = table.getCellRenderer(row, column);
+		// Component comp = table.prepareRenderer(renderer, row, column);
+		// width = Math.max(comp.getPreferredSize().width +1 , width);
+		// }
+		// if(width > 300)
+		// width=300;
+		// columnModel.getColumn(column).setPreferredWidth(width);
+		// }
+
+		JPanel panel = new JPanel();
+		services.add(panel);
+		panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+
+		JLabel lblNewLabel_1 = new JLabel(" ");
+		panel.add(lblNewLabel_1);
+
+		JPanel buttons = new JPanel();
+		panel.add(buttons);
+		buttons.setMaximumSize(new Dimension(300, 100));
+		JButton btnNew = new JButton("Add");
+		btnNew.setAlignmentX(Component.CENTER_ALIGNMENT);
+		btnNew.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				showInsertForm();
+			}
+		});
+		buttons.setLayout(new BoxLayout(buttons, BoxLayout.X_AXIS));
+		buttons.add(btnNew);
+
+		buttons.add(Box.createRigidArea(new Dimension(15, 0)));
+		JButton btnEdit = new JButton("Edit");
+		btnEdit.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				showEditForm();
+			}
+		});
+		buttons.add(btnEdit);
+
+		buttons.add(Box.createRigidArea(new Dimension(15, 0)));
+		JButton btnDelete = new JButton("Delete");
+		btnDelete.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				confirmDelete();
+			}
+		});
+		buttons.add(btnDelete);
+
+		JTabbedPane tabbedPane_1 = new JTabbedPane(JTabbedPane.TOP);
+		panel.add(tabbedPane_1);
 		table = new JTable() {
+
+			private static final long serialVersionUID = 1L;
+
 			@Override
 			protected void paintComponent(Graphics g) {
 				try {
@@ -97,29 +250,21 @@ public class CameraList extends JPanel {
 				}
 			}
 		};
-//        table.setTableHeader(null);
-		DefaultTableCellRenderer header = new DefaultTableCellRenderer();
-		header.setBackground(new Color(239, 240, 241));
-		header.setFont(header.getFont().deriveFont(Font.BOLD));
-
 		table.setModel(tm);
+		table.setRowHeight(30);
 		table.setAutoCreateRowSorter(false);
 		table.getColumnModel().getColumn(0).setMinWidth(0);
 		table.getColumnModel().getColumn(0).setPreferredWidth(0);
 		table.getColumnModel().getColumn(0).setMaxWidth(0);
 		table.getColumnModel().getColumn(0).setHeaderRenderer(header);
 
-		int tW = table.getWidth();
-		int nameWidth = Math.round(0.30f * tW);
-//        table.getColumnModel().getColumn(1).setMinWidth(nameWidth);
-		table.getColumnModel().getColumn(1).setPreferredWidth(nameWidth);
-//        table.getColumnModel().getColumn(1).setMaxWidth(nameWidth);
+		// table.getColumnModel().getColumn(1).setMinWidth(nameWidth);
+		// table.getColumnModel().getColumn(1).setMaxWidth(nameWidth);
+
+		table.getColumnModel().getColumn(1).setPreferredWidth(getWidth());
 		table.getColumnModel().getColumn(1).setHeaderRenderer(header);
 
-		int urlWidth = Math.round(0.70f * tW);
-//        table.getColumnModel().getColumn(2).setMinWidth(urlWidth);
-		table.getColumnModel().getColumn(2).setPreferredWidth(urlWidth);
-//        table.getColumnModel().getColumn(2).setMaxWidth(urlWidth);
+		table.getColumnModel().getColumn(2).setPreferredWidth(getWidth());
 		table.getColumnModel().getColumn(2).setHeaderRenderer(header);
 
 		table.getColumnModel().getColumn(3).setMinWidth(0);
@@ -131,8 +276,14 @@ public class CameraList extends JPanel {
 		table.getColumnModel().getColumn(4).setPreferredWidth(0);
 		table.getColumnModel().getColumn(4).setMaxWidth(0);
 		table.getColumnModel().getColumn(4).setHeaderRenderer(header);
+
+		table.getColumnModel().getColumn(5).setPreferredWidth(getWidth());
+		table.getColumnModel().getColumn(5).setHeaderRenderer(header);
+
 		table.setColumnSelectionAllowed(false);
 		table.setRowSelectionAllowed(true);
+
+		final TableColumnModel columnModel = table.getColumnModel();
 		table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
 		// double click to edit
@@ -146,7 +297,7 @@ public class CameraList extends JPanel {
 							@Override
 							public void run() {
 								try {
-									this.sleep(1000);
+									Thread.sleep(1000);
 									System.out.println("1 sec Delay showIPCamera");
 									showIPCamera();
 								} catch (InterruptedException e) {
@@ -167,62 +318,207 @@ public class CameraList extends JPanel {
 		});
 
 		JScrollPane pane = new JScrollPane(table);
-		add(pane, BorderLayout.CENTER);
+		tabbedPane_1.addTab("Cameras", null, pane, null);
+		pane.setSize(new Dimension(100, 300));
+		pane.setAlignmentY(Component.TOP_ALIGNMENT);
+		pane.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-		JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-		JButton btnNew = new JButton("Add");
-		btnNew.addActionListener(new ActionListener() {
+		JTabbedPane tabbedPane_2 = new JTabbedPane(JTabbedPane.TOP);
+		panel.add(tabbedPane_2);
+
+		JPanel panel_4 = new JPanel();
+		tabbedPane_2.addTab("Service", null, panel_4, null);
+		panel_4.setLayout(new BoxLayout(panel_4, BoxLayout.Y_AXIS));
+
+		JPanel status_holder = new JPanel();
+		panel_4.add(status_holder);
+		status_holder.setLayout(new GridLayout(0, 1, 0, 0));
+
+		JLabel lblNewLabel_5 = new JLabel(" Status : Running");
+		lblNewLabel_5.setHorizontalAlignment(SwingConstants.CENTER);
+		status_holder.add(lblNewLabel_5);
+
+		JPanel btn_holder1 = new JPanel();
+		panel_4.add(btn_holder1);
+		btn_holder1.setLayout(new FlowLayout(FlowLayout.CENTER, 5, 5));
+
+		JPanel buttons1 = new JPanel();
+		btn_holder1.add(buttons1);
+		buttons1.setMaximumSize(new Dimension(300, 100));
+		buttons1.setSize(new Dimension(100, 100));
+		buttons1.add(Box.createRigidArea(new Dimension(5, 0)));
+		JButton btnStart = new JButton("Start");
+		btnStart.setAlignmentX(Component.CENTER_ALIGNMENT);
+		btnStart.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				showInsertForm();
 			}
 		});
-		buttons.add(btnNew);
+		buttons1.setLayout(new BoxLayout(buttons1, BoxLayout.X_AXIS));
+		buttons1.add(btnStart);
 
-		JButton btnEdit = new JButton("Edit");
-		btnEdit.addActionListener(new ActionListener() {
+		buttons1.add(Box.createRigidArea(new Dimension(10, 0)));
+		JButton btnstop = new JButton("Stop");
+		btnstop.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				showEditForm();
 			}
 		});
-		buttons.add(btnEdit);
+		buttons1.add(btnstop);
 
-		JButton btnDelete = new JButton("Delete");
-		btnDelete.addActionListener(new ActionListener() {
+		camera_preview = new JPanel();
+		camera_preview.setBorder(new LineBorder(new Color(0, 0, 0)));
+		services.add(camera_preview);
+		camera_preview.setLayout(new BorderLayout(0, 0));
+
+		JPanel panel_1 = new JPanel();
+		GridBagLayout gbl_panel_1 = new GridBagLayout();
+		gbl_panel_1.columnWidths = new int[] { 194, 114, 0 };
+		gbl_panel_1.rowHeights = new int[] { 15, 0 };
+		gbl_panel_1.columnWeights = new double[] { 0.0, 0.0, Double.MIN_VALUE };
+		gbl_panel_1.rowWeights = new double[] { 0.0, Double.MIN_VALUE };
+		panel_1.setLayout(gbl_panel_1);
+
+		lblNewLabel = new JLabel("Camera Preview");
+
+		GridBagConstraints gbc_lblNewLabel = new GridBagConstraints();
+		gbc_lblNewLabel.anchor = GridBagConstraints.NORTHWEST;
+		gbc_lblNewLabel.gridx = 1;
+		gbc_lblNewLabel.gridy = 0;
+
+		GridBagConstraints gbc = new GridBagConstraints();
+		gbc.weightx = 1;
+		gbc.fill = GridBagConstraints.HORIZONTAL;
+		gbc.gridwidth = GridBagConstraints.REMAINDER;
+
+		panel_1.add(lblNewLabel, gbc);
+		lblNewLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+		lblNewLabel.setHorizontalAlignment(SwingConstants.CENTER);
+		camera_preview.add(panel_1);
+
+		JPanel logs = new JPanel();
+		tabbedPane.addTab("Logs", null, logs, null);
+		logs.setLayout(new BoxLayout(logs, BoxLayout.Y_AXIS));
+
+		JLabel lblNewLabel_2 = new JLabel(" ");
+		logs.add(lblNewLabel_2);
+
+		logtable = new JTable() {
+			/**
+			 * 
+			 */
+			private static final long serialVersionUID = 1L;
+
 			@Override
-			public void actionPerformed(ActionEvent e) {
-				confirmDelete();
+			protected void paintComponent(Graphics g) {
+				try {
+					super.paintComponent(g);
+					if (getRowCount() == 0) {
+						Graphics2D g2d = (Graphics2D) g;
+						Font prev = g.getFont();
+						Font italic = prev.deriveFont(Font.ITALIC);
+						g.setFont(italic);
+						RenderingHints hints = g2d.getRenderingHints();
+						g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
+								RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+						g2d.drawString("No Cameras Found.", 10, 20);
+						g2d.setRenderingHints(hints);
+					}
+				} catch (Exception e) {
+
+				}
+			}
+		};
+
+		logtable.setModel(logtm);
+		logtable.setRowHeight(30);
+		logtable.setAutoCreateRowSorter(false);
+		logtable.getColumnModel().getColumn(0).setMinWidth(0);
+		logtable.getColumnModel().getColumn(0).setPreferredWidth(0);
+		logtable.getColumnModel().getColumn(0).setMaxWidth(0);
+		logtable.getColumnModel().getColumn(0).setHeaderRenderer(logheader);
+
+		// logtable.getColumnModel().getColumn(1).setMinWidth(nameWidth);
+		logtable.getColumnModel().getColumn(1).setPreferredWidth(getWidth());
+		// logtable.getColumnModel().getColumn(1).setMaxWidth(nameWidth);
+		logtable.getColumnModel().getColumn(1).setHeaderRenderer(logheader);
+		// logtable.getColumnModel().getColumn(2).setMinWidth(urlWidth);
+		logtable.getColumnModel().getColumn(2).setPreferredWidth(getWidth());
+		// logtable.getColumnModel().getColumn(2).setMaxWidth(urlWidth);
+		logtable.getColumnModel().getColumn(2).setHeaderRenderer(logheader);
+
+		logtable.getColumnModel().getColumn(3).setMinWidth(0);
+		logtable.getColumnModel().getColumn(3).setPreferredWidth(0);
+		logtable.getColumnModel().getColumn(3).setMaxWidth(0);
+		logtable.getColumnModel().getColumn(3).setHeaderRenderer(logheader);
+
+		logtable.getColumnModel().getColumn(4).setMinWidth(0);
+		logtable.getColumnModel().getColumn(4).setPreferredWidth(0);
+		logtable.getColumnModel().getColumn(4).setMaxWidth(0);
+		logtable.getColumnModel().getColumn(4).setHeaderRenderer(logheader);
+		logtable.setColumnSelectionAllowed(false);
+		logtable.setRowSelectionAllowed(true);
+
+		final TableColumnModel logcolumnModel = logtable.getColumnModel();
+		for (int column = 0; column < logtable.getColumnCount(); column++) {
+			int width = 15; // Min width
+			for (int row = 0; row < logtable.getRowCount(); row++) {
+				TableCellRenderer renderer = logtable.getCellRenderer(row, column);
+				Component comp = logtable.prepareRenderer(renderer, row, column);
+				width = Math.max(comp.getPreferredSize().width + 1, width);
+			}
+			if (width > 300)
+				width = 300;
+			logcolumnModel.getColumn(column).setPreferredWidth(width);
+		}
+
+		logtable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+
+		// double click to edit
+		logtable.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent mouseEvent) {
+				if (mouseEvent.getClickCount() == 2) {
+					try {
+
+						new Thread() {
+							@Override
+							public void run() {
+								try {
+									Thread.sleep(1000);
+									System.out.println("1 sec Delay showIPCamera");
+									showIPCamera();
+								} catch (InterruptedException e) {
+									e.printStackTrace();
+								} catch (Exception e) {
+									// TODO Auto-generated catch block
+									e.printStackTrace();
+								}
+
+							}
+						}.start();
+					} catch (Exception e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}
+				}
 			}
 		});
-		buttons.add(btnDelete);
 
-		toolbar = new JPanel(new BorderLayout());
-		toolbar.add(buttons, BorderLayout.WEST);
-
-		// search bar
-		/*
-		 * JPanel searches = new JPanel(new FlowLayout(FlowLayout.LEFT));
-		 * searches.add(new JLabel("Search")); txtSearch = new JTextField();
-		 * txtSearch.addKeyListener(new KeyAdapter() {
-		 * 
-		 * @Override public void keyReleased(KeyEvent keyEvent) {
-		 * filterSearch(txtSearch.getText()); } }); txtSearch.setColumns(30);
-		 * searches.add(txtSearch);
-		 * 
-		 * toolbar.add(searches, BorderLayout.CENTER);
-		 */
-		add(toolbar, BorderLayout.NORTH);
+		JScrollPane logPane = new JScrollPane(logtable);
+		logPane.setAlignmentY(Component.TOP_ALIGNMENT);
+		logPane.setAlignmentX(Component.LEFT_ALIGNMENT);
+		logs.add(logPane);
 	}
 
-	private JTextField txtSearch;
-
-	public void loadAllData() {
+	public void loadAllData(String cmd) {
 		/*
 		 * if(!txtSearch.getText().isEmpty()){ filterSearch(txtSearch.getText()); } else
 		 * { loadData(null); }
 		 */
-		loadData(null);
+		loadData(null, cmd);
 	}
 
 	public void showIPCamera() throws Exception {
@@ -248,6 +544,7 @@ public class CameraList extends JPanel {
 		} catch (FrameGrabber.Exception e) {
 			e.printStackTrace();
 		}
+
 		IplImage iPimg = streamGrabber.grab();
 		canvasFrame = new CanvasFrame("Camera");
 		canvasFrame.setCanvasSize(iPimg.width(), iPimg.height());
@@ -259,6 +556,62 @@ public class CameraList extends JPanel {
 		}
 		streamGrabber.stop();
 		canvasFrame.dispose();
+
+//        newThread ab = new newThread(lblNewLabel,camera_url);
+//		Thread w = new Thread(ab);
+//		w.start();
+//        System.out.println("done");
+	}
+
+	class newThread implements Runnable {
+		JLabel newLabel;
+		String camera_url;
+
+		public newThread(JLabel jl, String cameraurl) {
+			newLabel = jl;
+			camera_url = cameraurl;
+		}
+
+		public void run() {
+			try {
+				if (streamGrabber != null) {
+					streamGrabber.stop();
+					canvasFrame.dispose();
+				}
+				streamGrabber = new FFmpegFrameGrabber(camera_url);
+//		        streamGrabber.setFormat("h264");
+				streamGrabber.setFrameRate(100);
+				streamGrabber.setImageWidth(getWidth());
+				streamGrabber.setImageHeight(getHeight());
+
+				try {
+					streamGrabber.start();
+				} catch (FrameGrabber.Exception e) {
+					e.printStackTrace();
+				}
+
+				BufferedImage img1;
+				JLabel label;
+				IplImage img = streamGrabber.grab();
+
+				while (img != null) {
+					System.out.println("canvasFrame.isVisible() " + img);
+					img1 = img.getBufferedImage();
+					ImageIcon icon = new ImageIcon(img1);
+					label = new JLabel(icon);
+					lblNewLabel.setIcon(null);
+					lblNewLabel.setIcon(icon);
+
+					lblNewLabel.invalidate();
+					lblNewLabel.validate();
+					lblNewLabel.repaint();
+
+				}
+
+			} catch (Exception ex) {
+				// Logger.getLogger(ChPanel.class.getName()).log(Leve l.SEVERE, null, ex);
+			}
+		}
 	}
 
 	public void stopIPCamera() throws Exception {
@@ -267,20 +620,18 @@ public class CameraList extends JPanel {
 		canvasFrame.dispose();
 	}
 
-	public void loadData(dbRow filter) {
-		setData(Cameras.loadData(filter));
+	public void loadData(dbRow filter, String cmd) {
+		setData(Cameras.loadData(filter), cmd);
 	}
 
-	private void setData(dbList tdata) {
+	private void setData(dbList tdata, String cmd) {
 		DefaultTableModel tm = (DefaultTableModel) table.getModel();
 		tm.setRowCount(0);
 		Map<String, String> d;
-		Map<String, String> dt;
-
 		for (int i : tdata.keySet()) {
 			d = tdata.get(i);
-			tm.addRow(new Object[] { d.get("id"), d.get("name"), d.get("url"), d.get("camera_id"),
-					d.get("stream_name") });
+			tm.addRow(new Object[] { d.get("id"), d.get("name"), d.get("url"), d.get("camera_id"), d.get("stream_name"),
+					d.get("status") });
 		}
 		/*
 		 * PrintWriter pw; try { pw = new PrintWriter(new
@@ -290,7 +641,7 @@ public class CameraList extends JPanel {
 		 * block e2.printStackTrace(); }
 		 */
 
-		if ((tdata != null)) {
+		if ((tdata != null) && cmd.equalsIgnoreCase("cmd")) {
 			dbRow data = Cameras.getPID("1");
 			System.out.println("PID data : " + data);
 			if (data == null) {
@@ -307,7 +658,7 @@ public class CameraList extends JPanel {
 								@Override
 								public void run() {
 									try {
-										this.sleep(1000);
+										Thread.sleep(1000);
 										System.out.println("1 sec Delay");
 										Utils.startVideoStream();
 									} catch (InterruptedException e) {
@@ -320,7 +671,7 @@ public class CameraList extends JPanel {
 								@Override
 								public void run() {
 									try {
-										this.sleep(2000);
+										Thread.sleep(2000);
 										System.out.println("2 sec Delay");
 										Utils.getPIDVideoStream();
 									} catch (InterruptedException e) {
@@ -337,7 +688,7 @@ public class CameraList extends JPanel {
 							@Override
 							public void run() {
 								try {
-									this.sleep(1000);
+									Thread.sleep(1000);
 									System.out.println("1 sec Delay");
 									Utils.startVideoStream();
 								} catch (InterruptedException e) {
@@ -353,8 +704,23 @@ public class CameraList extends JPanel {
 
 	}
 
+	public void loadLogData() {
+		setLogData(Cameras.loadLogData());
+	}
+
+	private void setLogData(dbList tdata) {
+		DefaultTableModel tm = (DefaultTableModel) logtable.getModel();
+		tm.setRowCount(0);
+		Map<String, String> d;
+		for (int i : tdata.keySet()) {
+			d = tdata.get(i);
+			tm.addRow(new Object[] { d.get("id"), d.get("log_time"), d.get("message"), d.get("process_name"),
+					d.get("type") });
+		}
+	}
+
 	public void filterSearch(String search) {
-		setData(Cameras.searchByName(search));
+		setData(Cameras.searchByName(search), "");
 	}
 
 	private String validateSelectedID() {
@@ -388,7 +754,7 @@ public class CameraList extends JPanel {
 		form.setVisible(true);
 
 		// load cameras from DB
-		loadAllData();
+		loadAllData("cmd");
 	}
 
 	private void showEditForm() {
@@ -403,7 +769,7 @@ public class CameraList extends JPanel {
 		form.setVisible(true);
 
 		// load cameras from DB
-		loadAllData();
+		loadAllData("cmd");
 	}
 
 	private void confirmDelete() {
@@ -431,7 +797,7 @@ public class CameraList extends JPanel {
 					System.out.println("status - success");
 					if (Cameras.delete(id)) {
 						Utils.alert("Data deleted");
-						loadAllData();
+						loadAllData("cmd");
 					} else {
 						Utils.alert("Data not deleted");
 					}

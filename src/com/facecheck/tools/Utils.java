@@ -9,10 +9,16 @@ import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 import javax.swing.JOptionPane;
+import javax.swing.JTextField;
 
+import com.facecheck.client.CameraList;
 import com.facecheck.client.Cameras;
+import com.facecheck.client.Launcher;
 import com.facecheck.db.dbRow;
 
 /**
@@ -20,6 +26,7 @@ import com.facecheck.db.dbRow;
  * @author user
  */
 public class Utils {
+	private static Map<String, JTextField> entries;
 
 	public static void stdout(Object o) {
 		System.out.println(o);
@@ -228,6 +235,38 @@ public class Utils {
 
 		try {
 			System.out.println("StartStream Process has started :( "+ "\n");
+			
+			entries = new HashMap<String, JTextField>();
+			entries.put("log_time", new JTextField());
+			entries.put("message", new JTextField());
+			entries.put("process_name", new JTextField());
+			entries.put("type", new JTextField());
+			
+			dbRow values = new dbRow();
+			for (String name : entries.keySet()) {
+				values.put(name, entries.get(name).getText());
+			}
+			Utils.stdout(values);
+			System.out.println("DataValues" + values);
+			Date date = new Date(); 
+			SimpleDateFormat formatter = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
+			System.out.println(formatter.format(date));
+			String date_time = formatter.format(date);
+			
+			values.put("log_time", date_time);
+			values.put("message", "Starting Streaming Service..");
+			values.put("process_name", "Stream Service");
+			values.put("type", "stream");
+			System.out.println("Logs DataValues" + values);
+			
+			int saved = Launcher.getDatabaseConnection().save("logs", "id", values);
+			
+			if (saved > 0) {
+				System.out.println("Logs Data saved");
+			} else {
+				System.out.println("Logs Data not saved.");
+			}
+			
 			Process process = processBuilder.start();
 
 			StringBuilder output = new StringBuilder();
@@ -280,6 +319,37 @@ public class Utils {
 			if (exitVal == 0) {
 				System.out.println("StopStream Process has completed"+ "\n");
 				System.out.println(output);
+				
+				entries = new HashMap<String, JTextField>();
+				entries.put("log_time", new JTextField());
+				entries.put("message", new JTextField());
+				entries.put("process_name", new JTextField());
+				entries.put("type", new JTextField());
+				
+				dbRow values = new dbRow();
+				for (String name : entries.keySet()) {
+					values.put(name, entries.get(name).getText());
+				}
+				Utils.stdout(values);
+				System.out.println("DataValues" + values);
+				Date date = new Date(); 
+				SimpleDateFormat formatter = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
+				System.out.println(formatter.format(date));
+				String date_time = formatter.format(date);
+				
+				values.put("log_time", date_time);
+				values.put("message", "Streaming Service PID("+pid+") has stopped");
+				values.put("process_name", "Stream Service");
+				values.put("type", "stream");
+				System.out.println("Logs DataValues" + values);
+				
+				int saved = Launcher.getDatabaseConnection().save("logs", "id", values);
+				
+				if (saved > 0) {
+					System.out.println("Logs Data saved");
+				} else {
+					System.out.println("Logs Data not saved.");
+				}
 			} else {
 				System.out.println("Something abnormal has happend in StopStream Process"+ "\n");
 			}
@@ -320,6 +390,37 @@ public class Utils {
 				System.out.println(output);
 				if (Cameras.updatePID(Pid)) {
 					System.out.println("PID has updated"+ "\n");
+					
+					entries = new HashMap<String, JTextField>();
+					entries.put("log_time", new JTextField());
+					entries.put("message", new JTextField());
+					entries.put("process_name", new JTextField());
+					entries.put("type", new JTextField());
+					
+					dbRow values = new dbRow();
+					for (String name : entries.keySet()) {
+						values.put(name, entries.get(name).getText());
+					}
+					Utils.stdout(values);
+					System.out.println("DataValues" + values);
+					Date date = new Date(); 
+					SimpleDateFormat formatter = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
+					System.out.println(formatter.format(date));
+					String date_time = formatter.format(date);
+					
+					values.put("log_time", date_time);
+					values.put("message", "Streaming Service PID("+Pid+") has started");
+					values.put("process_name", "Stream Service");
+					values.put("type", "stream");
+					System.out.println("Logs DataValues" + values);
+					
+					int saved = Launcher.getDatabaseConnection().save("logs", "id", values);
+					
+					if (saved > 0) {
+						System.out.println("Logs Data saved");
+					} else {
+						System.out.println("Logs Data not saved.");
+					}
 				} else {
 					System.out.println("PID has not updated"+ "\n");
 				}

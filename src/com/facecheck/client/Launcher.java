@@ -36,14 +36,26 @@ public class Launcher {
 		} catch (Exception e) {
 
 		}
-
+//		new Thread() {
+//			@Override
+//			public void run() {
+//				try {
+//					Thread.sleep(2000);
+//					System.out.println("main 2 sec Delay");
+//					Utils.startVideoStream();
+//				} catch (InterruptedException e) {
+//					e.printStackTrace();
+//				}
+//
+//			}
+//		}.start();
 		// database connection information
 		Map<String, String> dbInfo = new HashMap<String, String>();
 
 		dbInfo.put("dbHost", "localhost");
 		dbInfo.put("dbPort", "3306");
 		dbInfo.put("dbUser", "root");
-		dbInfo.put("dbPass", "");
+		dbInfo.put("dbPass", "facecheck");
 		dbInfo.put("dbName", "facecheck_client");
 
 		databaseConnection = new DB(dbInfo);

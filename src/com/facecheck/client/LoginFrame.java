@@ -39,6 +39,12 @@ public class LoginFrame extends JFrame {
 	public static MainFrame getFrame() {
 		return frame;
 	}
+	
+	private static CameraList frameCameraList;
+
+	public static CameraList getFrame1() {
+		return frameCameraList;
+	}
 
 	private Map<String, JTextField> entries;
 
@@ -110,6 +116,7 @@ public class LoginFrame extends JFrame {
 						entries.put("aws_secret", new JTextField());
 						entries.put("logged_in", new JTextField());
 						if (Cameras.deleteUser()) {
+							Cameras.deleteLogs();
 							System.out.println("usr data deleted");
 							LoginFrame.this.save(userName, password, token, aws_key, aws_secret);
 						} else {
@@ -144,12 +151,16 @@ public class LoginFrame extends JFrame {
 		values.put("aws_secret", aws_secret);
 		values.put("logged_in", "yes");
 		System.out.println("User DataValues" + values);
+		
 		int saved = Launcher.getDatabaseConnection().save("user", "id", values);
+		
 		if (saved > 0) {
 			setVisible(false);
-			frame = new MainFrame();
-			frame.setVisible(true);
-			frame.addWindowListener(new java.awt.event.WindowAdapter() {
+
+//			frame.setContent(new CameraList(), "Cameras");
+			frameCameraList = new CameraList();
+			frameCameraList.setVisible(true);
+			frameCameraList.addWindowListener(new java.awt.event.WindowAdapter() {
 				@Override
 				public void windowClosing(java.awt.event.WindowEvent windowEvent) {
 					if (JOptionPane.showConfirmDialog(frame, "Are you sure you want to close this window?",
@@ -161,11 +172,9 @@ public class LoginFrame extends JFrame {
 							return;
 						}
 						for (String field : data.keySet()) {
-							System.out.println("PID field : " + field);
-							System.out.println("PID value : " + data.get("value"));
 							if (field.equalsIgnoreCase("value")) {
 								PID = data.get("value");
-								System.out.println("PIDvalue : " + PID);
+								System.out.println("Last PID value : " + PID);
 								if (PID != "") {
 									try {
 										Utils.stopVideoStream(PID);
@@ -179,8 +188,6 @@ public class LoginFrame extends JFrame {
 					}
 				}
 			});
-
-			frame.setContent(new CameraList(), "Cameras");
 			dispose();
 		} else {
 			Utils.alert("Check your connection. Try again later.");

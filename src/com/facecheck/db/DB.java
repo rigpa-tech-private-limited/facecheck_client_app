@@ -298,6 +298,16 @@ public class DB {
 		}
 	}
 	
+	public dbRow fetchCameraStatus(String id) {
+		try {
+			return this.getRow(String.format("SELECT * FROM cameras WHERE id='%s' LIMIT 1", id));
+		} catch (Exception e) {
+			e.printStackTrace();
+			Utils.alert("Error on fetching data: " + e.getMessage());
+			return null;
+		}
+	}
+	
 	public dbRow fetchByID(String id, String tableName, String keyField) {
 		return fetchByID(id, tableName, keyField, true);
 	}

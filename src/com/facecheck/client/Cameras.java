@@ -56,6 +56,15 @@ public class Cameras {
 			return null;
 		}
 	}
+	
+	public static dbRow fetchCameraStatus(String id) {
+		try {
+			return Launcher.getDatabaseConnection().fetchCameraStatus(id);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
 
 	public static dbList searchByName(String name) {
 		try {
@@ -81,6 +90,26 @@ public class Cameras {
 	public static boolean updatePID(String PID) {
 		try {
 			String sql = String.format("UPDATE configuration SET value='%s' WHERE id = '1'", Utils.escapeSQLVar(PID));
+			return Launcher.getDatabaseConnection().nonTransactQuery(sql) > 0;
+		} catch (Exception ex) {
+			ex.printStackTrace();
+			return false;
+		}
+	}
+
+	public static boolean updateCameraStatus(String Status) {
+		try {
+			String sql = String.format("UPDATE cameras SET status='%s'", Utils.escapeSQLVar(Status));
+			return Launcher.getDatabaseConnection().nonTransactQuery(sql) > 0;
+		} catch (Exception ex) {
+			ex.printStackTrace();
+			return false;
+		}
+	}
+	
+	public static boolean updateCameraStatusByID(String cameraID, String Status) {
+		try {
+			String sql = String.format("UPDATE cameras SET status='%s' WHERE id='%s'", Utils.escapeSQLVar(Status), Utils.escapeSQLVar(cameraID));
 			return Launcher.getDatabaseConnection().nonTransactQuery(sql) > 0;
 		} catch (Exception ex) {
 			ex.printStackTrace();

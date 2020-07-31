@@ -6,6 +6,7 @@ import com.facecheck.tools.AppInfo;
 import com.facecheck.tools.Utils;
 import com.googlecode.javacv.CanvasFrame;
 import com.googlecode.javacv.FFmpegFrameGrabber;
+import com.googlecode.javacv.Frame;
 import com.googlecode.javacv.FrameGrabber;
 import com.googlecode.javacv.OpenCVFrameGrabber;
 import com.googlecode.javacv.cpp.opencv_core.IplImage;
@@ -29,8 +30,12 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.net.URL;
+import java.net.URLConnection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JButton;
@@ -87,36 +92,111 @@ public class CameraList extends JFrame {
 	 * Create the frame.
 	 */
 	public CameraList() {
-		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 		setBounds(100, 100, 450, 300);
 		contentPane = new JPanel();
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
 		setContentPane(contentPane);
 		contentPane.setLayout(null);
 
-		setMinimumSize(new Dimension(1024, 750));
+		setMinimumSize(new Dimension(1200, 750));
 		setLocationRelativeTo(null);
 
 		initComponents();
-		loadAllData("cmd");
+		if (Cameras.updateCameraStatus("Running")) {
+			loadAllData("cmd");
+		}
 //		loadLogData();
+		Runnable helloRunnable = new Runnable() {
+		    public void run() {
+		        System.out.println("Checking Inernet in every 5 secs");
+		        try { 
+		            URL checkurl = new URL("https://www.google.com/"); 
+		            URLConnection connection = checkurl.openConnection(); 
+		            connection.connect(); 
+		  
+		            System.out.println("Connection Successful"); 
+		            dbList tdata = Cameras.loadData(null);
+		    		Map<String, String> d;
+		    		for (int i : tdata.keySet()) {
+		    			d = tdata.get(i);
 
-	}
+			            streamGrabber1 = new FFmpegFrameGrabber(d.get("url"));
+				  		streamGrabber1.setFrameRate(100);
+				  		streamGrabber1.setImageWidth(getWidth());
+				  		streamGrabber1.setImageHeight(getHeight());
+		
+				  		try {
+				  			streamGrabber1.start();
+				  		} catch (FrameGrabber.Exception e) {
+				  			e.printStackTrace();
+				  		}
+		
+				  		IplImage iPimg = streamGrabber1.grab();
+				  		if((iPimg = streamGrabber1.grab()) != null) {
+				  			System.out.println(d.get("name")+ " Streaming ");
+				  		} else {
+				  			System.out.println(d.get("name")+ " not Streaming ");			  			
+				  		}
+				  		streamGrabber1.stop();
+				  		
+		    			/*if (Cameras.updateCameraStatusByID(d.get("id"), "Stopped")) {
+		    				try {
+		    					System.out.println("Status Update Camera Post API started");
+		    					URL url = new URL(AppInfo.BASE_URL + AppInfo.CAMERA_STATUS_UPDATE);
+		    					Map<String, String> params = new ConcurrentHashMap<String, String>();
+		    					params.put("camera_id", d.get("camera_id"));
+		    					params.put("status", "Stopped");
+		    					StringBuilder postData = new StringBuilder();
 
-	private JTable table;
-	private JTable logtable;
+		    					byte[] postDataBytes = Utils.setPostDataBytes(params, postData);
+		    					params.clear();
+		    					String response = Utils.getResponse(postDataBytes, url, true);
+		    					System.out.println("Status Update Camera Post API stopped");
+		    					System.out.println(response);
+		    					if (new JSONObject(response).get("status").equals("success")) {
+		    						System.out.println(d.get("camera_id") + " Status Update - success");
+		    					} else {
+		    						System.out.println(d.get("camera_id") + " Status Update - error");
+		    					}
+		    					loadAllData("");
+		    				} catch (Exception e) {
+		    					System.out.println("Error " + e.getMessage());
+		    				}
+		    			}*/
+		    		}
+//		    		cameraStopServiceProcess();
+		            
+		        } 
+		        catch (Exception e) { 
+		            System.out.println("Internet Not Connected"); 
+		        }
+		    }
+		};
+
+		ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
+		executor.scheduleAtFixedRate(helloRunnable, 0, 5, TimeUnit.SECONDS);
+
+	}	
+
+	public JTable table;
+	public JTable logtable;
 	private String PID = "";
 	public FFmpegFrameGrabber streamGrabber;
+	public FFmpegFrameGrabber streamGrabber1;
 	public CanvasFrame canvasFrame;
 	public JPanel camera_preview;
 	public JLabel lblNewLabel;
+	public JButton btnStart;
+	public JButton btnStop;
+	public JButton btnStartAll;
+	public JButton btnStopAll;
+	public JLabel serviceStatusLbl;
 
 	private void initComponents() {
 		String[] fields = "id, Name, URL(RTSP), Camera ID, Stream Name, Status".split(", ");
 		DefaultTableModel tm = new DefaultTableModel(null, fields) {
-			/**
-			 * 
-			 */
+
 			private static final long serialVersionUID = 1L;
 
 			@Override
@@ -131,9 +211,7 @@ public class CameraList extends JFrame {
 
 		String[] logfields = "id, Time, Message, Process, Type".split(", ");
 		DefaultTableModel logtm = new DefaultTableModel(null, logfields) {
-			/**
-			 * 
-			 */
+
 			private static final long serialVersionUID = 1L;
 
 			@Override
@@ -189,9 +267,15 @@ public class CameraList extends JFrame {
 
 		JLabel lblNewLabel_1 = new JLabel(" ");
 		panel.add(lblNewLabel_1);
+		Dimension dim = new Dimension(20, 1);
+
+		JPanel btnHolder = new JPanel();
+		FlowLayout flowLayout = (FlowLayout) btnHolder.getLayout();
+		flowLayout.setAlignment(FlowLayout.LEFT);
+		panel.add(btnHolder);
 
 		JPanel buttons = new JPanel();
-		panel.add(buttons);
+		btnHolder.add(buttons);
 		buttons.setMaximumSize(new Dimension(300, 100));
 		JButton btnNew = new JButton("Add");
 		btnNew.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -224,6 +308,26 @@ public class CameraList extends JFrame {
 		});
 		buttons.add(btnDelete);
 
+		buttons.add(Box.createRigidArea(new Dimension(15, 0)));
+		btnStart = new JButton("Start");
+		btnStart.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				startCameraByIdProcess();
+			}
+		});
+		buttons.add(btnStart);
+
+		buttons.add(Box.createRigidArea(new Dimension(15, 0)));
+		btnStop = new JButton("Stop");
+		btnStop.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				stopCameraByIdProcess();
+			}
+		});
+		buttons.add(btnStop);
+
 		JTabbedPane tabbedPane_1 = new JTabbedPane(JTabbedPane.TOP);
 		panel.add(tabbedPane_1);
 		table = new JTable() {
@@ -251,7 +355,10 @@ public class CameraList extends JFrame {
 			}
 		};
 		table.setModel(tm);
-		table.setRowHeight(30);
+		table.setIntercellSpacing(new Dimension(dim));
+
+		int height = table.getRowHeight();
+		table.setRowHeight(height + 10);
 		table.setAutoCreateRowSorter(false);
 		table.getColumnModel().getColumn(0).setMinWidth(0);
 		table.getColumnModel().getColumn(0).setPreferredWidth(0);
@@ -264,7 +371,9 @@ public class CameraList extends JFrame {
 		table.getColumnModel().getColumn(1).setPreferredWidth(getWidth());
 		table.getColumnModel().getColumn(1).setHeaderRenderer(header);
 
-		table.getColumnModel().getColumn(2).setPreferredWidth(getWidth());
+		table.getColumnModel().getColumn(2).setMinWidth(0);
+		table.getColumnModel().getColumn(2).setPreferredWidth(0);
+		table.getColumnModel().getColumn(2).setMaxWidth(0);
 		table.getColumnModel().getColumn(2).setHeaderRenderer(header);
 
 		table.getColumnModel().getColumn(3).setMinWidth(0);
@@ -290,9 +399,13 @@ public class CameraList extends JFrame {
 		table.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent mouseEvent) {
+				if (mouseEvent.getClickCount() == 1) {
+					System.out.println("Single Click");
+					displayStartStopBtn();
+				}
 				if (mouseEvent.getClickCount() == 2) {
 					try {
-
+						System.out.println("Double Click");
 						new Thread() {
 							@Override
 							public void run() {
@@ -323,6 +436,43 @@ public class CameraList extends JFrame {
 		pane.setAlignmentY(Component.TOP_ALIGNMENT);
 		pane.setAlignmentX(Component.LEFT_ALIGNMENT);
 
+		JPanel btn_holder1 = new JPanel();
+		panel.add(btn_holder1);
+		btn_holder1.setLayout(new FlowLayout(FlowLayout.CENTER, 5, 5));
+
+		JPanel buttons1 = new JPanel();
+		btn_holder1.add(buttons1);
+		buttons1.setMaximumSize(new Dimension(300, 100));
+		buttons1.setSize(new Dimension(100, 100));
+		buttons1.add(Box.createRigidArea(new Dimension(5, 0)));
+
+		btnStartAll = new JButton("Start All");
+		btnStartAll.setAlignmentX(Component.CENTER_ALIGNMENT);
+		btnStartAll.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				btnStartAll.setEnabled(false);
+				startAllCameraProcess();
+				btnStopAll.setEnabled(true);
+				serviceStatusLbl.setText("Satus : Running");
+			}
+		});
+		buttons1.setLayout(new BoxLayout(buttons1, BoxLayout.X_AXIS));
+		buttons1.add(btnStartAll);
+		buttons1.add(Box.createRigidArea(new Dimension(10, 0)));
+
+		btnStopAll = new JButton("Stop All");
+		btnStopAll.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				btnStopAll.setEnabled(false);
+				stopAllCameraProcess();
+				btnStartAll.setEnabled(true);
+				serviceStatusLbl.setText("Satus : Stopped");
+			}
+		});
+		buttons1.add(btnStopAll);
+
 		JTabbedPane tabbedPane_2 = new JTabbedPane(JTabbedPane.TOP);
 		panel.add(tabbedPane_2);
 
@@ -334,39 +484,9 @@ public class CameraList extends JFrame {
 		panel_4.add(status_holder);
 		status_holder.setLayout(new GridLayout(0, 1, 0, 0));
 
-		JLabel lblNewLabel_5 = new JLabel(" Status : Running");
-		lblNewLabel_5.setHorizontalAlignment(SwingConstants.CENTER);
-		status_holder.add(lblNewLabel_5);
-
-		JPanel btn_holder1 = new JPanel();
-		panel_4.add(btn_holder1);
-		btn_holder1.setLayout(new FlowLayout(FlowLayout.CENTER, 5, 5));
-
-		JPanel buttons1 = new JPanel();
-		btn_holder1.add(buttons1);
-		buttons1.setMaximumSize(new Dimension(300, 100));
-		buttons1.setSize(new Dimension(100, 100));
-		buttons1.add(Box.createRigidArea(new Dimension(5, 0)));
-		JButton btnStart = new JButton("Start");
-		btnStart.setAlignmentX(Component.CENTER_ALIGNMENT);
-		btnStart.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				showInsertForm();
-			}
-		});
-		buttons1.setLayout(new BoxLayout(buttons1, BoxLayout.X_AXIS));
-		buttons1.add(btnStart);
-
-		buttons1.add(Box.createRigidArea(new Dimension(10, 0)));
-		JButton btnstop = new JButton("Stop");
-		btnstop.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				showEditForm();
-			}
-		});
-		buttons1.add(btnstop);
+		serviceStatusLbl = new JLabel(" Status : Running");
+		serviceStatusLbl.setHorizontalAlignment(SwingConstants.CENTER);
+		status_holder.add(serviceStatusLbl);
 
 		camera_preview = new JPanel();
 		camera_preview.setBorder(new LineBorder(new Color(0, 0, 0)));
@@ -433,7 +553,11 @@ public class CameraList extends JFrame {
 		};
 
 		logtable.setModel(logtm);
-		logtable.setRowHeight(30);
+		Dimension logdim = new Dimension(20, 1);
+		logtable.setIntercellSpacing(new Dimension(logdim));
+
+		int logheight = logtable.getRowHeight();
+		logtable.setRowHeight(logheight + 10);
 		logtable.setAutoCreateRowSorter(false);
 		logtable.getColumnModel().getColumn(0).setMinWidth(0);
 		logtable.getColumnModel().getColumn(0).setPreferredWidth(0);
@@ -481,28 +605,7 @@ public class CameraList extends JFrame {
 			@Override
 			public void mouseClicked(MouseEvent mouseEvent) {
 				if (mouseEvent.getClickCount() == 2) {
-					try {
 
-						new Thread() {
-							@Override
-							public void run() {
-								try {
-									Thread.sleep(1000);
-									System.out.println("1 sec Delay showIPCamera");
-									showIPCamera();
-								} catch (InterruptedException e) {
-									e.printStackTrace();
-								} catch (Exception e) {
-									// TODO Auto-generated catch block
-									e.printStackTrace();
-								}
-
-							}
-						}.start();
-					} catch (Exception e1) {
-						// TODO Auto-generated catch block
-						e1.printStackTrace();
-					}
 				}
 			}
 		});
@@ -513,12 +616,258 @@ public class CameraList extends JFrame {
 		logs.add(logPane);
 	}
 
+	public void cameraStartServiceProcess() {
+		dbRow data = Cameras.getPID("1");
+		System.out.println("PID data : " + data);
+		if (data == null) {
+			return;
+		}
+		for (String field : data.keySet()) {
+			if (field.equalsIgnoreCase("value")) {
+				PID = data.get("value");
+				System.out.println("PIDvalue : " + PID);
+				if (PID != "") {
+					try {
+						Utils.stopVideoStream(PID);
+						new Thread() {
+							@Override
+							public void run() {
+								try {
+									Thread.sleep(1000);
+									System.out.println("1 sec Delay");
+									Utils.startVideoStream();
+								} catch (InterruptedException e) {
+									e.printStackTrace();
+								}
+
+							}
+						}.start();
+						new Thread() {
+							@Override
+							public void run() {
+								try {
+									Thread.sleep(2000);
+									System.out.println("2 sec Delay");
+									Utils.getPIDVideoStream();
+								} catch (InterruptedException e) {
+									e.printStackTrace();
+								}
+
+							}
+						}.start();
+					} catch (InterruptedException e1) {
+						e1.printStackTrace();
+					}
+				} else {
+					new Thread() {
+						@Override
+						public void run() {
+							try {
+								Thread.sleep(1000);
+								System.out.println("1 sec Delay");
+								Utils.startVideoStream();
+							} catch (InterruptedException e) {
+								e.printStackTrace();
+							}
+
+						}
+					}.start();
+				}
+			}
+		}
+	}
+
+	public void cameraStopServiceProcess() {
+		dbRow data = Cameras.getPID("1");
+		System.out.println("PID data : " + data);
+		if (data == null) {
+			return;
+		}
+		for (String field : data.keySet()) {
+			if (field.equalsIgnoreCase("value")) {
+				PID = data.get("value");
+				System.out.println("PIDvalue : " + PID);
+				if (PID != "") {
+					try {
+						Utils.stopVideoStream(PID);
+					} catch (InterruptedException e1) {
+						e1.printStackTrace();
+					}
+				}
+			}
+		}
+	}
+
+	public void startAllCameraProcess() {
+
+		dbList tdata = Cameras.loadData(null);
+		Map<String, String> d;
+		for (int i : tdata.keySet()) {
+			d = tdata.get(i);
+			if (Cameras.updateCameraStatusByID(d.get("id"), "Running")) {
+				try {
+					System.out.println("Status Update Camera Post API started");
+					URL url = new URL(AppInfo.BASE_URL + AppInfo.CAMERA_STATUS_UPDATE);
+					Map<String, String> params = new ConcurrentHashMap<String, String>();
+					params.put("camera_id", d.get("camera_id"));
+					params.put("status", "Running");
+					StringBuilder postData = new StringBuilder();
+
+					byte[] postDataBytes = Utils.setPostDataBytes(params, postData);
+					params.clear();
+					String response = Utils.getResponse(postDataBytes, url, true);
+					System.out.println("Status Update Camera Post API stopped");
+					System.out.println(response);
+					if (new JSONObject(response).get("status").equals("success")) {
+						System.out.println(d.get("camera_id") + " Status Update - success");
+					} else {
+						System.out.println(d.get("camera_id") + " Status Update - error");
+					}
+					loadAllData("");
+				} catch (Exception e) {
+					System.out.println("Error " + e.getMessage());
+				}
+			}
+		}
+		cameraStartServiceProcess();
+
+	}
+
+	public void stopAllCameraProcess() {
+		dbList tdata = Cameras.loadData(null);
+		Map<String, String> d;
+		for (int i : tdata.keySet()) {
+			d = tdata.get(i);
+			if (Cameras.updateCameraStatusByID(d.get("id"), "Stopped")) {
+				try {
+					System.out.println("Status Update Camera Post API started");
+					URL url = new URL(AppInfo.BASE_URL + AppInfo.CAMERA_STATUS_UPDATE);
+					Map<String, String> params = new ConcurrentHashMap<String, String>();
+					params.put("camera_id", d.get("camera_id"));
+					params.put("status", "Stopped");
+					StringBuilder postData = new StringBuilder();
+
+					byte[] postDataBytes = Utils.setPostDataBytes(params, postData);
+					params.clear();
+					String response = Utils.getResponse(postDataBytes, url, true);
+					System.out.println("Status Update Camera Post API stopped");
+					System.out.println(response);
+					if (new JSONObject(response).get("status").equals("success")) {
+						System.out.println(d.get("camera_id") + " Status Update - success");
+					} else {
+						System.out.println(d.get("camera_id") + " Status Update - error");
+					}
+					loadAllData("");
+				} catch (Exception e) {
+					System.out.println("Error " + e.getMessage());
+				}
+			}
+		}
+		cameraStopServiceProcess();
+	}
+	
+	public void startCameraByIdProcess() {
+
+		String id = validateSelectedID();
+		String camera_id = validateSelectedCameraID();
+		if (id.trim().isEmpty()) {
+			return;
+		}
+
+		// load cameras from DB
+		if (Cameras.updateCameraStatusByID(id, "Running")) {
+			try {
+				cameraStartServiceProcess();
+				System.out.println("Status Update Camera Post API started");
+				URL url = new URL(AppInfo.BASE_URL + AppInfo.CAMERA_STATUS_UPDATE);
+				Map<String, String> params = new ConcurrentHashMap<String, String>();
+				params.put("camera_id", camera_id);
+				params.put("status", "Running");
+				StringBuilder postData = new StringBuilder();
+
+				byte[] postDataBytes = Utils.setPostDataBytes(params, postData);
+				params.clear();
+				String response = Utils.getResponse(postDataBytes, url, true);
+				System.out.println("Status Update Camera Post API stopped");
+				System.out.println(response);
+				if (new JSONObject(response).get("status").equals("success")) {
+					System.out.println(camera_id + " Status Update - success");
+				} else {
+					System.out.println(camera_id + " Status Update - error");
+				}
+				loadAllData("");
+			} catch (Exception e) {
+				System.out.println("Error " + e.getMessage());
+			}
+		}
+
+	}
+
+	public void stopCameraByIdProcess() {
+		String id = validateSelectedID();
+		String camera_id = validateSelectedCameraID();
+		if (id.trim().isEmpty()) {
+			return;
+		}
+
+		// load cameras from DB
+		if (Cameras.updateCameraStatusByID(id, "Stopped")) {
+			try {
+				cameraStartServiceProcess();
+				System.out.println("Status Update Camera Post API started");
+				URL url = new URL(AppInfo.BASE_URL + AppInfo.CAMERA_STATUS_UPDATE);
+				Map<String, String> params = new ConcurrentHashMap<String, String>();
+				params.put("camera_id", camera_id);
+				params.put("status", "Stopped");
+				StringBuilder postData = new StringBuilder();
+
+				byte[] postDataBytes = Utils.setPostDataBytes(params, postData);
+				params.clear();
+				String response = Utils.getResponse(postDataBytes, url, true);
+				System.out.println("Status Update Camera Post API stopped");
+				System.out.println(response);
+				if (new JSONObject(response).get("status").equals("success")) {
+					System.out.println(camera_id + " Status Update - success");
+				} else {
+					System.out.println(camera_id + " Status Update - error");
+				}
+				loadAllData("");
+			} catch (Exception e) {
+				System.out.println("Error " + e.getMessage());
+			}
+		}
+	}
+	
+
 	public void loadAllData(String cmd) {
 		/*
 		 * if(!txtSearch.getText().isEmpty()){ filterSearch(txtSearch.getText()); } else
 		 * { loadData(null); }
 		 */
 		loadData(null, cmd);
+	}
+
+	public void displayStartStopBtn() {
+		String id = validateSelectedID();
+		String camStatus = "";
+		dbRow data = Cameras.fetchCameraStatus(id);
+		System.out.println("Status data : " + data);
+		if (data == null) {
+			return;
+		}
+		for (String field : data.keySet()) {
+			if (field.equalsIgnoreCase("status")) {
+				camStatus = data.get("status");
+				System.out.println("camStatus : " + camStatus);
+				if (camStatus.equalsIgnoreCase("Running")) {
+					btnStart.setEnabled(false);
+					btnStop.setEnabled(true);
+				} else if (camStatus.equalsIgnoreCase("Stopped")) {
+					btnStart.setEnabled(true);
+					btnStop.setEnabled(false);
+				}
+			}
+		}
 	}
 
 	public void showIPCamera() throws Exception {
@@ -534,8 +883,7 @@ public class CameraList extends JFrame {
 		// rtsp://admin:admin123@192.168.1.10:554/channel=1/subtype=0
 
 		streamGrabber = new FFmpegFrameGrabber(camera_url);
-//        streamGrabber.setFormat("h264");
-		streamGrabber.setFrameRate(100);
+		streamGrabber.setFrameRate(50);
 		streamGrabber.setImageWidth(getWidth());
 		streamGrabber.setImageHeight(getHeight());
 
@@ -562,6 +910,35 @@ public class CameraList extends JFrame {
 //		w.start();
 //        System.out.println("done");
 	}
+	
+	/*public class GrabberWrapper {
+		private Java2DFrameConverter converter = new Java2DFrameConverter();
+		private FFmpegFrameGrabber grabber;
+		private Frame frame;
+
+		public GrabberWrapper(FFmpegFrameGrabber grabber) {
+			this.grabber = grabber;
+		}
+
+		public synchronized void grabImage() throws Exception {
+			this.frame = this.grabber.grabFrame();
+		}
+
+		public synchronized BufferedImage getImage() {
+			if (this.frame == null) {
+				return null;
+			}
+			return deepCopy(converter.convert(this.frame));
+		}
+		
+		private BufferedImage deepCopy(BufferedImage bi) {
+			ColorModel cm = bi.getColorModel();
+			boolean isAlphaPremultiplied = cm.isAlphaPremultiplied();
+			WritableRaster raster = bi.copyData(null);
+			return new BufferedImage(cm, raster, isAlphaPremultiplied, null);
+		}
+	}
+	*/
 
 	class newThread implements Runnable {
 		JLabel newLabel;
@@ -579,8 +956,7 @@ public class CameraList extends JFrame {
 					canvasFrame.dispose();
 				}
 				streamGrabber = new FFmpegFrameGrabber(camera_url);
-//		        streamGrabber.setFormat("h264");
-				streamGrabber.setFrameRate(100);
+				streamGrabber.setFrameRate(30);
 				streamGrabber.setImageWidth(getWidth());
 				streamGrabber.setImageHeight(getHeight());
 

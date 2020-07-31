@@ -22,6 +22,7 @@ import javax.swing.JPasswordField;
 import javax.swing.JButton;
 import javax.swing.JOptionPane;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
@@ -47,11 +48,12 @@ public class LoginFrame extends JFrame {
 	}
 
 	private Map<String, JTextField> entries;
-
+	private WindowAdapter windowAdapter;
 	/**
 	 * Create the frame.
 	 */
 	public LoginFrame() {
+		setMinimumSize(new Dimension(600, 400));
 		setBounds(100, 100, 450, 300);
 		contentPane = new JPanel();
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
@@ -60,26 +62,28 @@ public class LoginFrame extends JFrame {
 
 		JLabel lblNewLabel = new JLabel("Login");
 		lblNewLabel.setHorizontalAlignment(SwingConstants.CENTER);
-		lblNewLabel.setFont(new Font("Lucida Grande", Font.BOLD, 16));
-		lblNewLabel.setBounds(6, 41, 444, 25);
+		lblNewLabel.setFont(new Font("Dialog", Font.BOLD, 20));
+		lblNewLabel.setBounds(0, 100, 550, 25);
 		contentPane.add(lblNewLabel);
 
 		JLabel lblNewLabel_1 = new JLabel("Email");
+		lblNewLabel_1.setHorizontalAlignment(SwingConstants.RIGHT);
 		lblNewLabel_1.setFont(new Font("Lucida Grande", Font.BOLD, 13));
-		lblNewLabel_1.setBounds(90, 98, 100, 16);
+		lblNewLabel_1.setBounds(30, 150, 200, 35);
 		contentPane.add(lblNewLabel_1);
 
 		JLabel lblNewLabel_2 = new JLabel("Password");
-		lblNewLabel_2.setBounds(90, 144, 100, 16);
+		lblNewLabel_2.setHorizontalAlignment(SwingConstants.RIGHT);
+		lblNewLabel_2.setBounds(30, 200, 200, 35);
 		contentPane.add(lblNewLabel_2);
 
 		txtUsername = new JTextField();
-		txtUsername.setBounds(219, 93, 188, 26);
+		txtUsername.setBounds(250, 150, 250, 35);
 		contentPane.add(txtUsername);
 		txtUsername.setColumns(10);
 
 		txtPassword = new JPasswordField();
-		txtPassword.setBounds(219, 139, 188, 26);
+		txtPassword.setBounds(250, 200, 250, 35);
 		contentPane.add(txtPassword);
 
 		JButton btnNewButton = new JButton("Submit");
@@ -132,7 +136,7 @@ public class LoginFrame extends JFrame {
 				}
 			}
 		});
-		btnNewButton.setBounds(219, 188, 117, 29);
+		btnNewButton.setBounds(250, 250, 100, 30);
 		contentPane.add(btnNewButton);
 
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -160,12 +164,13 @@ public class LoginFrame extends JFrame {
 //			frame.setContent(new CameraList(), "Cameras");
 			frameCameraList = new CameraList();
 			frameCameraList.setVisible(true);
-			frameCameraList.addWindowListener(new java.awt.event.WindowAdapter() {
+			 windowAdapter = new WindowAdapter() {
 				@Override
 				public void windowClosing(java.awt.event.WindowEvent windowEvent) {
-					if (JOptionPane.showConfirmDialog(frame, "Are you sure you want to close this window?",
+					int showDialog = JOptionPane.showConfirmDialog(frame, "Are you sure you want to close this window?",
 							"Close Window?", JOptionPane.YES_NO_OPTION,
-							JOptionPane.QUESTION_MESSAGE) == JOptionPane.YES_OPTION) {
+							JOptionPane.QUESTION_MESSAGE);
+					if ( showDialog == JOptionPane.YES_OPTION) {
 						dbRow data = Cameras.getPID("1");
 						System.out.println("PID data : " + data);
 						if (data == null) {
@@ -185,10 +190,13 @@ public class LoginFrame extends JFrame {
 								}
 							}
 						}
+						dispose();
+					} else {
+						setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 					}
 				}
-			});
-			dispose();
+			};
+			frameCameraList.addWindowListener(windowAdapter);
 		} else {
 			Utils.alert("Check your connection. Try again later.");
 		}

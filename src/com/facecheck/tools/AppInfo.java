@@ -15,5 +15,6 @@ public class AppInfo {
     public static final String ADD_CAMERA = "camera/add";
     public static final String EDIT_CAMERA = "camera/edit";
     public static final String DELETE_CAMERA = "camera/delete";
+    public static final String CAMERA_STATUS_UPDATE = "camera/status";
     
 }

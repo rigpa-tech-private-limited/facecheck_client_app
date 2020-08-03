@@ -2,10 +2,22 @@ package com.facecheck.client;
 
 import com.facecheck.db.dbList;
 import com.facecheck.db.dbRow;
+import com.facecheck.tools.AppInfo;
 import com.facecheck.tools.Utils;
+
+import java.net.URL;
 import java.sql.SQLException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import javax.swing.JTextField;
+
+import org.json.JSONObject;
 
 /**
  *
@@ -107,10 +119,73 @@ public class Cameras {
 		}
 	}
 	
-	public static boolean updateCameraStatusByID(String cameraID, String Status) {
+	public static boolean updateCameraStatusByID(String cameraID, String Status, String updated_by) {
 		try {
-			String sql = String.format("UPDATE cameras SET status='%s' WHERE id='%s'", Utils.escapeSQLVar(Status), Utils.escapeSQLVar(cameraID));
-			return Launcher.getDatabaseConnection().nonTransactQuery(sql) > 0;
+			Date date = new Date(); 
+			SimpleDateFormat formatter = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
+			System.out.println(formatter.format(date));
+			String date_time = formatter.format(date);
+			
+			String sql = String.format("UPDATE cameras SET status='%s', last_update_time='%s', last_update_by='%s' WHERE camera_id='%s'", 
+					Utils.escapeSQLVar(Status), Utils.escapeSQLVar(date_time), Utils.escapeSQLVar(updated_by), Utils.escapeSQLVar(cameraID));
+			if(Launcher.getDatabaseConnection().nonTransactQuery(sql) > 0) {
+				String sync_status = "0";
+				if(Utils.checkInternetAvailable()) {
+					// System.out.println("Status Update Camera Post API started");
+					URL url = new URL(AppInfo.BASE_URL + AppInfo.CAMERA_STATUS_UPDATE);
+					Map<String, String> params = new ConcurrentHashMap<String, String>();
+					params.put("camera_id", cameraID);
+					params.put("status", Status);
+					StringBuilder postData = new StringBuilder();
+		
+					byte[] postDataBytes = Utils.setPostDataBytes(params, postData);
+					params.clear();
+					String response = Utils.getResponse(postDataBytes, url, true);
+					// System.out.println("Status Update Camera Post API stopped");
+					// System.out.println(response);
+					if (new JSONObject(response).get("status").equals("success")) {
+						// System.out.println(Status + " Status Update - success");
+						sync_status = "1";
+						
+					} else {
+						// System.out.println(Status + " Status Update - error");
+					}
+				}
+				
+				Map<String, JTextField> entries = new HashMap<String, JTextField>();
+				entries.put("camera_id", new JTextField());
+				entries.put("status", new JTextField());
+				entries.put("status_time", new JTextField());
+				entries.put("updated_by", new JTextField());
+				entries.put("reason", new JTextField());
+				entries.put("sync_status", new JTextField());
+				
+				dbRow values = new dbRow();
+				for (String name : entries.keySet()) {
+					values.put(name, entries.get(name).getText());
+				}
+				Utils.stdout(values);
+				// System.out.println("Data Values" + values);
+				
+				values.put("camera_id", cameraID);
+				values.put("status", Status);
+				values.put("status_time", date_time);
+				values.put("updated_by", updated_by);
+				values.put("reason", "");
+				values.put("sync_status", sync_status);
+				// System.out.println("Camera Logs Data Values" + values);
+				
+				int saved = Launcher.getDatabaseConnection().save("camera_logs", "id", values);
+				
+				/*if (saved > 0) {
+					System.out.println("Camera Logs Data saved");
+				} else {
+					System.out.println("Camera Logs Data not saved.");
+				}*/
+				return true;
+			} else {
+				return false;
+			}
 		} catch (Exception ex) {
 			ex.printStackTrace();
 			return false;

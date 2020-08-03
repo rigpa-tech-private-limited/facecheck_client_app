@@ -10,6 +10,7 @@ import javax.swing.border.EmptyBorder;
 
 import org.json.JSONObject;
 
+import com.facecheck.db.dbList;
 import com.facecheck.db.dbRow;
 import com.facecheck.tools.AppInfo;
 import com.facecheck.tools.Utils;
@@ -68,11 +69,12 @@ public class LoginFrame extends JFrame {
 
 		JLabel lblNewLabel_1 = new JLabel("Email");
 		lblNewLabel_1.setHorizontalAlignment(SwingConstants.RIGHT);
-		lblNewLabel_1.setFont(new Font("Lucida Grande", Font.BOLD, 13));
+		lblNewLabel_1.setFont(new Font("Dialog", Font.BOLD, 15));
 		lblNewLabel_1.setBounds(30, 150, 200, 35);
 		contentPane.add(lblNewLabel_1);
 
 		JLabel lblNewLabel_2 = new JLabel("Password");
+		lblNewLabel_2.setFont(new Font("Dialog", Font.BOLD, 15));
 		lblNewLabel_2.setHorizontalAlignment(SwingConstants.RIGHT);
 		lblNewLabel_2.setBounds(30, 200, 200, 35);
 		contentPane.add(lblNewLabel_2);
@@ -92,7 +94,7 @@ public class LoginFrame extends JFrame {
 				String userName = txtUsername.getText();
 				String password = txtPassword.getText();
 				try {
-					System.out.println("User Login Post API started");
+					// System.out.println("User Login Post API started");
 					URL url = new URL(AppInfo.BASE_URL + AppInfo.USER_LOGIN);
 					Map<String, String> params = new ConcurrentHashMap<String, String>();
 					params.put("email", userName);
@@ -102,13 +104,13 @@ public class LoginFrame extends JFrame {
 					byte[] postDataBytes = Utils.setPostDataBytes(params, postData);
 					params.clear();
 					String response = Utils.getResponse(postDataBytes, url, false);
-					System.out.println("User Login Post API stopped");
-					System.out.println(response);
+					// System.out.println("User Login Post API stopped");
+					// System.out.println(response);
 					if (new JSONObject(response).get("status").equals("success")) {
 						JSONObject obj = new JSONObject(response);
 						JSONObject usrData = obj.getJSONObject("data");
-						System.out.println("usrData - ");
-						System.out.println(usrData);
+						// System.out.println("usrData - ");
+						// System.out.println(usrData);
 						String token = obj.getString("token");
 						String aws_key = usrData.getString("key");
 						String aws_secret = usrData.getString("secret");
@@ -121,17 +123,17 @@ public class LoginFrame extends JFrame {
 						entries.put("logged_in", new JTextField());
 						if (Cameras.deleteUser()) {
 							Cameras.deleteLogs();
-							System.out.println("usr data deleted");
+							// System.out.println("usr data deleted");
 							LoginFrame.this.save(userName, password, token, aws_key, aws_secret);
 						} else {
 							Utils.alert("User data not deleted");
 						}
 					} else {
-						System.out.println("status - error");
+						// System.out.println("status - error");
 						Utils.alert("Invalid credentials.");
 					}
 				} catch (Exception e1) {
-					System.out.println("Error " + e1.getMessage());
+					// System.out.println("Error " + e1.getMessage());
 					Utils.alert("Check your connection. Try again later.");
 				}
 			}
@@ -146,7 +148,7 @@ public class LoginFrame extends JFrame {
 	public void save(String email, String password, String token, String aws_key, String aws_secret) {
 		dbRow values = getEntries();
 		Utils.stdout(values);
-		System.out.println("DataValues" + values);
+		// System.out.println("DataValues" + values);
 
 		values.put("email", email);
 		values.put("password", password);
@@ -154,7 +156,7 @@ public class LoginFrame extends JFrame {
 		values.put("aws_key", aws_key);
 		values.put("aws_secret", aws_secret);
 		values.put("logged_in", "yes");
-		System.out.println("User DataValues" + values);
+		// System.out.println("User DataValues" + values);
 		
 		int saved = Launcher.getDatabaseConnection().save("user", "id", values);
 		
@@ -171,15 +173,23 @@ public class LoginFrame extends JFrame {
 							"Close Window?", JOptionPane.YES_NO_OPTION,
 							JOptionPane.QUESTION_MESSAGE);
 					if ( showDialog == JOptionPane.YES_OPTION) {
+						
+						dbList tdata = Cameras.loadData(null);
+						Map<String, String> d;
+						for (int i : tdata.keySet()) {
+							d = tdata.get(i);
+							Cameras.updateCameraStatusByID(d.get("camera_id"), "Stopped", "system");
+						}
+						
 						dbRow data = Cameras.getPID("1");
-						System.out.println("PID data : " + data);
+						// System.out.println("PID data : " + data);
 						if (data == null) {
 							return;
 						}
 						for (String field : data.keySet()) {
 							if (field.equalsIgnoreCase("value")) {
 								PID = data.get("value");
-								System.out.println("Last PID value : " + PID);
+								// System.out.println("Last PID value : " + PID);
 								if (PID != "") {
 									try {
 										Utils.stopVideoStream(PID);

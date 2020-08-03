@@ -36,19 +36,7 @@ public class Launcher {
 		} catch (Exception e) {
 
 		}
-//		new Thread() {
-//			@Override
-//			public void run() {
-//				try {
-//					Thread.sleep(2000);
-//					System.out.println("main 2 sec Delay");
-//					Utils.startVideoStream();
-//				} catch (InterruptedException e) {
-//					e.printStackTrace();
-//				}
-//
-//			}
-//		}.start();
+		
 		// database connection information
 		Map<String, String> dbInfo = new HashMap<String, String>();
 
@@ -65,7 +53,6 @@ public class Launcher {
 			return;
 		} else {
 			System.out.println("Database connection success.");
-//        	getCamerasFromServer();
 		}
 
 		frame = new LoginFrame();

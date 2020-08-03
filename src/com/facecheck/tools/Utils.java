@@ -8,6 +8,7 @@ import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLConnection;
 import java.net.URLEncoder;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -169,6 +170,20 @@ public class Utils {
 
 		return postData.toString().getBytes("UTF-8");
 	}
+	
+	public static boolean checkInternetAvailable() {
+        try { 
+            URL checkurl = new URL("https://www.google.com/"); 
+            URLConnection connection = checkurl.openConnection(); 
+            connection.connect();
+            // System.out.println("Internet connection available.");
+            return true;
+        } 
+        catch (Exception e) { 
+            System.out.println("Internet connection not available"); 
+            return false;
+        }
+	}
 
 	/**
 	 * This method will make post request and parse the obtained response and send
@@ -191,13 +206,13 @@ public class Utils {
 			if (incldeToken) {
 				String userToken = "";
 				dbRow data = Cameras.getUserToken();
-				System.out.println("User data : " + data);
+				// System.out.println("User data : " + data);
 				if (data != null) {
 					for (String field : data.keySet()) {
 						if (field.equalsIgnoreCase("token")) {
 							userToken = data.get("token");
 							if (userToken != "") {
-								System.out.println("Authorization userToken : " + userToken);
+								// System.out.println("Authorization userToken : " + userToken);
 								con.setRequestProperty("Authorization", "Bearer " + userToken);
 							}
 						}
@@ -234,7 +249,7 @@ public class Utils {
 		processBuilder.directory(new File(System.getProperty("user.home")));
 
 		try {
-			System.out.println("StartStream Process has started :( "+ "\n");
+			// System.out.println("StartStream Process has started :( "+ "\n");
 			
 			entries = new HashMap<String, JTextField>();
 			entries.put("log_time", new JTextField());
@@ -247,7 +262,7 @@ public class Utils {
 				values.put(name, entries.get(name).getText());
 			}
 			Utils.stdout(values);
-			System.out.println("DataValues" + values);
+			// System.out.println("DataValues" + values);
 			Date date = new Date(); 
 			SimpleDateFormat formatter = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
 			System.out.println(formatter.format(date));
@@ -257,15 +272,15 @@ public class Utils {
 			values.put("message", "Starting Streaming Service..");
 			values.put("process_name", "Stream Service");
 			values.put("type", "stream");
-			System.out.println("Logs DataValues" + values);
+			// System.out.println("Logs DataValues" + values);
 			
 			int saved = Launcher.getDatabaseConnection().save("logs", "id", values);
 			
-			if (saved > 0) {
+			/*if (saved > 0) {
 				System.out.println("Logs Data saved");
 			} else {
 				System.out.println("Logs Data not saved.");
-			}
+			}*/
 			
 			Process process = processBuilder.start();
 
@@ -283,7 +298,7 @@ public class Utils {
 			int exitVal = process.waitFor();
 			if (exitVal == 0) {
 				System.out.println("StartStream Process has completed"+ "\n");
-				System.out.println(output);
+				// System.out.println(output);
 			} else {
 				System.out.println("Something abnormal has happend in StartStream Process"+ "\n");
 			}
@@ -318,7 +333,7 @@ public class Utils {
 			int exitVal = process.waitFor();
 			if (exitVal == 0) {
 				System.out.println("StopStream Process has completed"+ "\n");
-				System.out.println(output);
+				//System.out.println(output);
 				
 				entries = new HashMap<String, JTextField>();
 				entries.put("log_time", new JTextField());
@@ -331,7 +346,7 @@ public class Utils {
 					values.put(name, entries.get(name).getText());
 				}
 				Utils.stdout(values);
-				System.out.println("DataValues" + values);
+				//System.out.println("DataValues" + values);
 				Date date = new Date(); 
 				SimpleDateFormat formatter = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
 				System.out.println(formatter.format(date));
@@ -341,15 +356,15 @@ public class Utils {
 				values.put("message", "Streaming Service PID("+pid+") has stopped");
 				values.put("process_name", "Stream Service");
 				values.put("type", "stream");
-				System.out.println("Logs DataValues" + values);
+				//System.out.println("Logs DataValues" + values);
 				
 				int saved = Launcher.getDatabaseConnection().save("logs", "id", values);
 				
-				if (saved > 0) {
+				/*if (saved > 0) {
 					System.out.println("Logs Data saved");
 				} else {
 					System.out.println("Logs Data not saved.");
-				}
+				}*/
 			} else {
 				System.out.println("Something abnormal has happend in StopStream Process"+ "\n");
 			}
@@ -389,7 +404,7 @@ public class Utils {
 				System.out.println("pID process has Completed"+ "\n");
 				System.out.println(output);
 				if (Cameras.updatePID(Pid)) {
-					System.out.println("PID has updated"+ "\n");
+					//System.out.println("PID has updated"+ "\n");
 					
 					entries = new HashMap<String, JTextField>();
 					entries.put("log_time", new JTextField());
@@ -402,7 +417,7 @@ public class Utils {
 						values.put(name, entries.get(name).getText());
 					}
 					Utils.stdout(values);
-					System.out.println("DataValues" + values);
+					// System.out.println("DataValues" + values);
 					Date date = new Date(); 
 					SimpleDateFormat formatter = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
 					System.out.println(formatter.format(date));
@@ -412,17 +427,17 @@ public class Utils {
 					values.put("message", "Streaming Service PID("+Pid+") has started");
 					values.put("process_name", "Stream Service");
 					values.put("type", "stream");
-					System.out.println("Logs DataValues" + values);
+					// System.out.println("Logs DataValues" + values);
 					
 					int saved = Launcher.getDatabaseConnection().save("logs", "id", values);
 					
-					if (saved > 0) {
+					/*if (saved > 0) {
 						System.out.println("Logs Data saved");
 					} else {
 						System.out.println("Logs Data not saved.");
-					}
+					}*/
 				} else {
-					System.out.println("PID has not updated"+ "\n");
+					//System.out.println("PID has not updated"+ "\n");
 				}
 			} else {
 				System.out.println("Something abnormal has happend in pID process"+ "\n");
